@@ -7,6 +7,9 @@ const companydata = mongoose.Schema({
         firstname: {type: mongoose.Schema.Types.Mixed, required: true},
         lastname: {type: mongoose.Schema.Types.Mixed, required: true}
     },
+    companyNumber: {type: mongoose.Schema.Types.Mixed, required: true},
+    preview: {type: mongoose.Schema.Types.Mixed, required: true},
+    status: {type: Boolean, required: true},
     dateRegistered: {type: mongoose.Schema.Types.Mixed, required: true},
     email: {type: mongoose.Schema.Types.Mixed, required: true},
     password: {type: mongoose.Schema.Types.Mixed, required: true}
