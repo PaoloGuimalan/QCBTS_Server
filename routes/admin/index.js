@@ -289,4 +289,19 @@ router.get('/companyreglist', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/companydetails/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID;
+
+    CompanyRegdata.findOne({companyID: companyID}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Error processing Company Details!" } })
+            console.log(err);
+        }
+        else{
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
 module.exports = router;
