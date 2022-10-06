@@ -304,4 +304,35 @@ router.get('/companydetails/:companyID', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/allcompanydata/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID;
+
+    CompanyRegdata.findOne({companyID: companyID}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Could not query Company Data!" } })
+            console.log(err);
+        }
+        else{
+            if(result != null){
+                CompanyData.find({companyID: companyID}, { password: 0 }, (err2, result2) => {
+                    if(err2){
+                        res.send({ status: false, result: { message: "Unable to query Company Admins Data!" } })
+                        console.log(err2);
+                    }
+                    else{
+                        res.send({ status: true, result: {
+                            companydata: result,
+                            adminlist: result2
+                        } })
+                    }
+                })
+            }
+            else{
+                res.send({ status: false, result: { message: "There is no company in this account!" } })
+            }
+        }
+    })
+})
+
 module.exports = router;
