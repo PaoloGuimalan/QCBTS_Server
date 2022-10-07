@@ -335,4 +335,35 @@ router.get('/allcompanydata/:companyID', jwtverifier, (req, res) => {
     })
 })
 
+router.post('/updateCompanyData', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.body.companyID;
+    const companyName = req.body.companyName;
+    const companyNumber = req.body.companyNumber;
+    const companyEmail = req.body.companyEmail;
+    const companyAddress = req.body.companyAddress;
+
+    CompanyRegdata.updateOne({ companyID: companyID }, 
+        { companyName: companyName, companyNumber: companyNumber, email: companyEmail, companyAddress: companyAddress },
+        (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Update Data failed!" } })
+                console.log(err);
+            }
+            else{
+                CompanyData.updateMany({ companyID: companyID }, { companyName: companyName }, (err2, result2) => {
+                    if(err2){
+                        res.send({ status: false, result: { message: "Update Data failed!" } })
+                        console.log(err2);
+                    }
+                    else{
+                        res.send({ status: true, result: { message: "Company Data have been successfully updated!" } })
+                    }
+                })
+            }
+        })
+
+    // console.log({ companyID, companyName, companyNumber, companyEmail, companyAddress });
+})
+
 module.exports = router;
