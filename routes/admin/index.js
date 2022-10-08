@@ -366,4 +366,20 @@ router.post('/updateCompanyData', jwtverifier, (req, res) => {
     // console.log({ companyID, companyName, companyNumber, companyEmail, companyAddress });
 })
 
+router.get('/getCompanyAdminData/:companyAdID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyAdID = req.params.companyAdID;
+
+    CompanyData.findOne({companyAdminID: companyAdID}, { password: 0 }, (err, result) => {
+        if(err){
+            res.send({ status: true, result: { message: "Unable to find admin data!" } })
+            console.log(err)
+        }
+        else{
+            // console.log(result)
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
 module.exports = router;
