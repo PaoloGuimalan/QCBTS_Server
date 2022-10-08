@@ -382,4 +382,23 @@ router.get('/getCompanyAdminData/:companyAdID', jwtverifier, (req, res) => {
     })
 })
 
+router.post('/updateCompanyAdminData', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const compAdID = req.body.companyAdminID;
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const email = req.body.email;
+
+    CompanyData.updateOne({ companyAdminID: compAdID }, { companyAdmin: { firstname: firstName, lastname: lastName }, email: email },
+        (err, result) => {
+            if(err){
+                console.log(err);
+                res.send({ status: false, result: { message: "Cannot update Company Admin data!" } })
+            }
+            else{
+                res.send({ status: true, result: { message: "Company Admin data updated!" } })
+            }
+        })
+})
+
 module.exports = router;
