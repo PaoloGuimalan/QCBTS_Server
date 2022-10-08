@@ -401,4 +401,34 @@ router.post('/updateCompanyAdminData', jwtverifier, (req, res) => {
         })
 })
 
+router.post('/updateCompanyAdminPassword', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const compAdID = req.body.compAdID;
+    const adminPassword = req.body.adminPassword;
+    const newCompanyAdminPassword =  req.body.newPassword;
+
+    AdminData.findOne({ adminID: id, password: adminPassword }, (err, result) => {
+        if(err){
+            res.send({status: false, result: { message: "Verification Failed!" }})
+            console.log(err);
+        }
+        else{
+            if(result != null){
+                CompanyData.updateOne({ companyAdminID: compAdID }, { password: newCompanyAdminPassword }, (err2, result2) => {
+                    if(err2){
+                        res.send({ status: false, result: { message: "Password update Failed!" } })
+                        console.log(err2)
+                    }
+                    else{
+                        res.send({ status: true, result: { message: "Password has been Updated!" } })
+                    }
+                })
+            }
+            else{
+                res.send({ status: false, result: { message: "You are not authorized to do this action!" } })
+            }
+        }
+    })
+})
+
 module.exports = router;
