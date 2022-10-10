@@ -5,11 +5,12 @@ const jwt = require("jsonwebtoken")
 
 //Route for this is /admin
 
-// let responses = []
+let responses = Object.create(null);
 
 const AdminData = require("../../schema/admin/admindata")
 const CompanyData = require("../../schema/company/companydata")
 const CompanyRegdata = require("../../schema/company/companyRegdata")
+const BusStopsData = require("../../schema/configs/busstops")
 
 router.use((req, res, next) => {
     next();
@@ -430,5 +431,128 @@ router.post('/updateCompanyAdminPassword', jwtverifier, (req, res) => {
         }
     })
 })
+
+/**
+ * Partial Part of Long Polling: in Add Bus Stops
+ */
+
+router.post('/addBusStop', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const busStopID = `BS_${makeid(6)}`;
+    const stationName = req.body.stationName;
+    const stationAddress = req.body.stationAddress;
+    const longitude = req.body.longitude;
+    const latitude = req.body.latitude;
+    const dateNow = dateGetter();
+
+    const checkAddBusStopID = (BSID) => {
+        BusStopsData.find({ busStopID: busStopID }, (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Failed to Check Bus Stop" } })
+                console.log(err)
+            }
+            else{
+                if(result.length != 0){
+                    checkAddBusStopID(`BS_${makeid(6)}`)
+                }
+                else{
+                    const newBusStop = new BusStopsData({
+                        busStopID: BSID,
+                        stationName: stationName,
+                        stationAddress: stationAddress,
+                        coordinates: {
+                            longitude: longitude,
+                            latitude: latitude
+                        },
+                        dateAdded: dateNow,
+                        addedBy: id,
+                        status: false
+                    })
+
+                    newBusStop.save().then(() => {
+                        res.send({ status: true, result: { message: "New Bus Stop has been Added" } })
+                        respondToAllBSData()
+                    }).catch((errc) => {
+                        res.send({ status: false, result: { message: "Error in creating Bus Stop" } })
+                        console.log(errc)
+                    })
+                }
+            }
+        })
+    }
+
+    checkAddBusStopID(busStopID)
+
+    // console.log(req.body)
+})
+
+function respondToAllBSData(){
+    BusStopsData.find({}, (err, result) => {
+        if(err){
+            for(let id in responses){
+                let otherres =  responses[id];
+                otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+                otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+                otherres.send({status: false, result: { message: "Cannot establish data!" }})
+            }
+        }
+        else{
+            for(let id in responses){
+                let otherres =  responses[id];
+                otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+                otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+                otherres.send({status: true, result: result})
+            }
+        }
+    })
+}
+
+/**
+ * Long Polling Bus Stops Data
+ */
+
+router.get('/initBusStopsData', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    BusStopsData.find({}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot process data!" } })
+        }
+        else{
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
+router.get('/busStopsDataSubscribe', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    responses[id] =  res;
+
+    req.on('close', () => {
+        delete responses[id];
+    })
+})
+
+router.post('/updateStopStatus', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const stopID = req.body.stopID;
+    const stopStatus = req.body.stopStatus;
+
+    BusStopsData.updateOne({ busStopID: stopID }, { status: stopStatus }, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Unable to update Bus Stop status" } })
+            console.log(err)
+        }
+        else{
+            res.send({ status: true, result: { message: `Station ${stopID} status has been updated` } })
+            respondToAllBSData()
+        }
+    })
+})
+
+/**
+ * End of Long Polling
+ */
 
 module.exports = router;
