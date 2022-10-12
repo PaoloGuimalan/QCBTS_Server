@@ -551,8 +551,40 @@ router.post('/updateStopStatus', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/deleteBusStop/:busStopID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const busStopID = req.params.busStopID
+
+    BusStopsData.deleteOne({ busStopID:  busStopID}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Unable to delete Bus Stop" } })
+            console.log(err)
+        }
+        else{
+            respondToAllBSData()
+            res.send({ status: true, result: { message: "Bus Stop has been deleted" } })
+        }
+    })
+})
+
 /**
  * End of Long Polling
  */
+
+router.get('/getSpecificBusStopData/:busStopID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const busStopID =  req.params.busStopID;
+
+    BusStopsData.findOne({busStopID: busStopID}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot get Bus Stop Data" } })
+            console.log(err);
+        }
+        else{
+            res.send({ status: true, result: result })
+            // console.log(result)
+        }
+    })
+})
 
 module.exports = router;
