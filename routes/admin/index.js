@@ -491,6 +491,7 @@ function respondToAllBSData(){
         if(err){
             for(let id in responses){
                 let otherres =  responses[id];
+                otherres.setHeader('Access-Control-Allow-Origin', '*');
                 otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
                 otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
                 otherres.send({status: false, result: { message: "Cannot establish data!" }})
@@ -499,6 +500,7 @@ function respondToAllBSData(){
         else{
             for(let id in responses){
                 let otherres =  responses[id];
+                otherres.setHeader('Access-Control-Allow-Origin', '*');
                 otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
                 otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
                 otherres.send({status: true, result: result})
