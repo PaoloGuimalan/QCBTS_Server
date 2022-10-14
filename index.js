@@ -39,10 +39,12 @@ const server_app = app.listen(PORT, () => {
 const authentication = require("./routes/authentication");
 const admin = require("./routes/admin/index");
 const company = require("./routes/company/index");
+const messages = require("./routes/messages/index")
 
 app.use("/auth", authentication);
 app.use("/admin", admin);
 app.use("/company", company)
+app.use("/messages", messages)
 
 //LONG POLLING WORKING CONCEPT WITH MESSAGES
 //=================================================================================
