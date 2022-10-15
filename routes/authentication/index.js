@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 
 const AdminData = require("../../schema/admin/admindata");
 const CompanyData = require("../../schema/company/companydata");
+const UserProfilesData = require("../../schema/allusers/userprofiles")
 
 router.use((req, res, next) => {
     next();
@@ -54,6 +55,26 @@ router.post('/createAdmin', (req, res) => {
     const lastname =  req.body.lastname;
     const email =  req.body.email;
     const password =  req.body.password;
+
+    const userProfileSave = () => {
+        const newuserProfile = new UserProfilesData({
+            userID: adminID,
+            userDisplayName: `${firstname} ${middlename} ${lastname}`,
+            preview: "none",
+            userType: "systemAdmin"
+        })
+
+        newuserProfile.save().then(() => {
+            res.send({status: true, result: {
+                message: "New System Admin Added!"
+            }})
+        }).catch((err) => {
+            res.send({status: false, result: {
+                message: "Unable to save System Admin user profile"
+            }})
+            console.log(err)
+        })
+    }
     
     const newAdmin = new AdminData({
         adminID: adminID,
@@ -65,7 +86,31 @@ router.post('/createAdmin', (req, res) => {
     })
 
     newAdmin.save().then(() => {
-        res.send({status: true, result: "Admin Created!"})
+        userProfileSave()
+        // res.send({status: true, result: "Admin Created!"})
+    })
+})
+
+router.post('/createAdminProfile', (req, res) => {
+    const adminID = req.body.adminID;
+    const firstname =  req.body.firstname;
+    const middlename =  req.body.middlename;
+    const lastname =  req.body.lastname;
+    const email =  req.body.email;
+    const password =  req.body.password;
+
+    const newuserProfile = new UserProfilesData({
+        userID: adminID,
+        userDisplayName: middlename == ""? `${firstname} ${lastname}` : `${firstname} ${middlename} ${lastname}`,
+        preview: "none",
+        userType: "systemAdmin",
+    })
+
+    newuserProfile.save().then(() => {
+        res.send({status: true, result: { message: "System Admin User Profile has been Added!" }})
+    }).catch((err) => {
+        console.log(err)
+        res.send({ status: false, result: { message: "Error at /createAdminProfile" } })
     })
 })
 

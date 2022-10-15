@@ -11,6 +11,7 @@ const AdminData = require("../../schema/admin/admindata")
 const CompanyData = require("../../schema/company/companydata")
 const CompanyRegdata = require("../../schema/company/companyRegdata")
 const BusStopsData = require("../../schema/configs/busstops")
+const UserProfilesData = require("../../schema/allusers/userprofiles")
 
 router.use((req, res, next) => {
     next();
@@ -119,6 +120,26 @@ router.post('/createcompanyadmin', jwtverifier, async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
 
+    const userProfileSave = (id, type) => {
+        const newuserProfile = new UserProfilesData({
+            userID: id,
+            userDisplayName: `${firstname} ${lastname}`,
+            preview: "none",
+            userType: type
+        })
+
+        newuserProfile.save().then(() => {
+            res.send({status: true, result: {
+                message: "New Company Admin Added!"
+            }})
+        }).catch((err) => {
+            res.send({status: false, result: {
+                message: "Unable to save admin user profile"
+            }})
+            console.log(err)
+        })
+    }
+
     const saveData = (compID, compAdID) => {
 
         const newCompany = new CompanyData({
@@ -139,9 +160,7 @@ router.post('/createcompanyadmin', jwtverifier, async (req, res) => {
         })
 
         newCompany.save().then(() => {
-            res.send({status: true, result: {
-                message: "New Company Admin Added!"
-            }})
+            userProfileSave(compAdID, "companyAdmin")
         }).catch((err) => {
             res.send({status: false, result: {
                 message: "Unable to save new admin!"
@@ -390,6 +409,19 @@ router.post('/updateCompanyAdminData', jwtverifier, (req, res) => {
     const lastName = req.body.lastName;
     const email = req.body.email;
 
+    const updateCompanyAdminProfile = () => {
+        UserProfilesData.updateOne({ userID: compAdID }, { userDisplayName: `${firstName} ${lastName}` },
+        (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Cannot update Company Admin profile!" } })
+                console.log(err)
+            }
+            else{
+                res.send({ status: true, result: { message: "Company Admin data updated!" } })
+            }
+        })
+    }
+
     CompanyData.updateOne({ companyAdminID: compAdID }, { companyAdmin: { firstname: firstName, lastname: lastName }, email: email },
         (err, result) => {
             if(err){
@@ -397,7 +429,7 @@ router.post('/updateCompanyAdminData', jwtverifier, (req, res) => {
                 res.send({ status: false, result: { message: "Cannot update Company Admin data!" } })
             }
             else{
-                res.send({ status: true, result: { message: "Company Admin data updated!" } })
+                updateCompanyAdminProfile()
             }
         })
 })

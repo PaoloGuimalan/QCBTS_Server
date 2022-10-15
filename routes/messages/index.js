@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken")
 
 const ConversationData = require("../../schema/messages/conversationdata");
 const AdminData = require("../../schema/admin/admindata")
+const UserProfilesData = require("../../schema/allusers/userprofiles")
 
 let responses = Object.create(null);
 
@@ -125,12 +126,124 @@ router.post('/sendMessage', jwtverifier, (req, res) => {
      * Send message algorithm here
      * firstly check if conversation id is existing or not, and if not, create new,
      * make a new long polling service for messages (this applies for all users)
+     * 20 digits contentID
+     * 15 digits conversationID
      */
     res.send({ status: true, result: {
         userID: id, 
         message: "JWT accepted Token!",
         userType: userType 
     } })
+})
+
+router.get('/initMessagesList/:filterType', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const filterType =  req.params.filterType;
+
+    const generateProfilewithMessage = (arrayData, convResult) => {
+        UserProfilesData.find({ userID: { $in: arrayData } }, (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error generating Messages and Profiles" } })
+                console.log(err)
+            }
+            else{
+                res.send({ status: true, result: {
+                    profiles: result,
+                    conversations: convResult
+                } })
+                // console.log({ status: true, result: {
+                //     profiles: result,
+                //     conversations: convResult
+                // } })
+                // console.log(result)
+            }
+        })
+    }
+
+    ConversationData.aggregate([
+        {$match: {$and: [{$or: [{"from.userType": filterType},{"to.userType": filterType}]},{$or: [{"from.userID": id},{"to.userID": id}]}]}},
+        {$group: {
+            _id: "$conversationID",
+            conversationID: { $last: "$conversationID" },
+            contentID: { $last: "$contentID" },
+            content: { $last: "$content" },
+            contentType: { $last: "$contentType" },
+            contentTime: { $last: "$contentTime" },
+            contentDate: { $last: "$contentDate" },
+            from: { $last: "$from" },
+            to: { $last: "$to" }
+        }},
+        {$sort: {
+            "contentTime": -1,
+            "contentDate": -1
+        }}
+    ],
+        (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error generating Messages" } })
+                console.log(err)
+            }
+            else{
+                // res.send({ status: true, result: result })
+                // console.log(filterType)
+                var resArray = [];
+
+                if(result.length != 0){
+                    // console.log(result[0].from)
+                    result.map((data, i) => {
+                        if(data.from.userID == id){
+                            // console.log(data.to.userID);
+                            resArray.push(data.to.userID)
+                        }
+                        else{
+                            // console.log(data.from.userID);
+                            resArray.push(data.from.userID)
+                        }
+                    })
+
+                    setTimeout(() => {
+                        generateProfilewithMessage(resArray, result)
+                        // console.log(resArray)
+                    }, 0)
+                }
+                else{
+                    generateProfilewithMessage(resArray, result)
+                    // console.log(result)
+                }
+            }
+        })
+
+})
+
+//WHEN USER IS CREATED (ANY TYPE OF USER IN THE SYSTEM), also save their data in userprofiles collection in database
+
+router.get('/initConversation/:conversationID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const conversationID = req.params.conversationID;
+
+    ConversationData.find({conversationID: conversationID}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot retrieve conversation" } })
+            console.log(err);
+        }
+        else{
+            // res.send("ok")
+            var otherID = result[0].from.userID == id? result[0].to.userID : result[0].from.userID;
+
+            UserProfilesData.findOne({ userID: otherID }, (err2, result2) => {
+                if(err2){
+                    res.send({ status: false, result: { message: "Cannot retrieve user profile" } })
+                    console.log(err2)
+                }
+                else{
+                    res.send({ status: true, result: {
+                        userDetails: result2,
+                        conversation: result
+                    } })
+                }
+            })
+        }
+    })
 })
 
 module.exports = router;

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const conversationdata = mongoose.Schema({
     conversationID: { type: mongoose.Schema.Types.Mixed, required: true },
+    contentID: { type: mongoose.Schema.Types.Mixed, required: true },
     content: { type: mongoose.Schema.Types.Mixed, required: true },
     contentType: { type: mongoose.Schema.Types.Mixed, required: true },
     contentTime: { type: mongoose.Schema.Types.Mixed, required: true },
