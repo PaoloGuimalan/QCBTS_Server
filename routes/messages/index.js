@@ -8,6 +8,7 @@ const AdminData = require("../../schema/admin/admindata")
 const UserProfilesData = require("../../schema/allusers/userprofiles")
 
 let responses = Object.create(null);
+let responsesConvo = Object.create(null);
 
 const jwtverifier = (req, res, next) => {
     const token = req.headers["x-access-token"];
@@ -325,9 +326,36 @@ router.get('/subscribeMessages', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    responsesConvo[id] = res;
+
+    req.on('close', () => {
+        delete responsesConvo[id];
+    })
+})
+
 function respondToAllMsgData(sender, receiver, conversationID, type){
     for(let idd in responses){
         let otherres =  responses[idd];
+        
+        if(idd == sender){
+            otherres.setHeader('Access-Control-Allow-Origin', '*');
+            otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+            otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+            otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+        else if(idd == receiver){
+            otherres.setHeader('Access-Control-Allow-Origin', '*');
+            otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+            otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+            otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+    }
+
+    for(let idd in responsesConvo){
+        let otherres =  responsesConvo[idd];
         
         if(idd == sender){
             otherres.setHeader('Access-Control-Allow-Origin', '*');
