@@ -34,7 +34,7 @@ const jwtverifier = (req, res, next) => {
                             if(id.includes("admin")){
                                 if(result.adminID == id){
                                     req.params.decodedID = decode.id
-                                    req.params.userType = "system_admin"
+                                    req.params.userType = "systemadmins"
                                     next();
                                 }
                                 else{
@@ -120,6 +120,60 @@ router.post('/sendMessage', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
     const userType = req.params.userType;
 
+    
+    const conversationID = req.body.conversationID;
+    const contentID = `${makeid(20)}`;
+    const content = req.body.content;
+    const contentType = req.body.contentType;
+    const contentTime = `${timeGetter()}`;
+    const contentDate = `${dateGetter()}`;
+    // const fromID = req.body.fromID;
+    // const fromType = req.body.fromType;
+    const toID = req.body.toID;
+    const toType = req.body.toType;
+    const filterType = req.body.filterType
+
+    const numID = 00000000000000000000;
+
+    const makeContentID = (cID) => {
+        ConversationData.count({}, (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error creating content ID" } })
+                console.log(err);
+            }
+            else{
+                // console.log(result + 1)
+                const newContent = new ConversationData({
+                    conversationID: conversationID,
+                    contentID: result + 1,
+                    content: content,
+                    contentType: contentType,
+                    contentTime: contentTime,
+                    contentDate: contentDate,
+                    from: {
+                        userID: id,
+                        userType: userType
+                    },
+                    to: {
+                        userID: toID,
+                        userType: toType
+                    }
+                })
+
+                newContent.save().then(() => {
+                    res.send({ status: true, result: { message: "Message Sent!" } })
+                    respondToAllMsgData(id, toID, conversationID, filterType)
+                    // console.log("Good")
+                }).catch((err) => {
+                    res.send({ status: false, result: { message: "Unable to send message!" } })
+                    console.log(err)
+                })
+            }
+        })
+    }
+
+    makeContentID(contentID)
+
     /**
      * Note: 
      * 
@@ -129,16 +183,12 @@ router.post('/sendMessage', jwtverifier, (req, res) => {
      * 20 digits contentID
      * 15 digits conversationID
      */
-    res.send({ status: true, result: {
-        userID: id, 
-        message: "JWT accepted Token!",
-        userType: userType 
-    } })
 })
 
-router.get('/initMessagesList/:filterType', jwtverifier, (req, res) => {
+router.get('/initMessagesList/:filterType/:filterTypeDynamic', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
     const filterType =  req.params.filterType;
+    const filterTypeDynamic = req.params.filterTypeDynamic
 
     const generateProfilewithMessage = (arrayData, convResult) => {
         UserProfilesData.find({ userID: { $in: arrayData } }, (err, result) => {
@@ -148,7 +198,7 @@ router.get('/initMessagesList/:filterType', jwtverifier, (req, res) => {
             }
             else{
                 res.send({ status: true, result: {
-                    profiles: result,
+                    profiles: result.reverse(),
                     conversations: convResult
                 } })
                 // console.log({ status: true, result: {
@@ -161,7 +211,24 @@ router.get('/initMessagesList/:filterType', jwtverifier, (req, res) => {
     }
 
     ConversationData.aggregate([
-        {$match: {$and: [{$or: [{"from.userType": filterType},{"to.userType": filterType}]},{$or: [{"from.userID": id},{"to.userID": id}]}]}},
+        {$match: {$or: [
+            {$and: [
+                {"from.userType": filterType},
+                {"to.userType": filterTypeDynamic},
+                {$or: [
+                    {"from.userID": id},
+                    {"to.userID": id}
+                ]}
+            ]},
+            {$and: [
+                {"to.userType": filterType},
+                {"from.userType": filterTypeDynamic},
+                {$or: [
+                    {"from.userID": id},
+                    {"to.userID": id}
+                ]}
+            ]}
+        ]}},
         {$group: {
             _id: "$conversationID",
             conversationID: { $last: "$conversationID" },
@@ -173,9 +240,9 @@ router.get('/initMessagesList/:filterType', jwtverifier, (req, res) => {
             from: { $last: "$from" },
             to: { $last: "$to" }
         }},
+        // {$match: {$or: [{$or: [{"from.userType": filterType},{"from.userID": id}]},{$or: [{"to.userType": filterType},{"to.userID": id}]}]}},
         {$sort: {
-            "contentTime": -1,
-            "contentDate": -1
+            contentID: -1
         }}
     ],
         (err, result) => {
@@ -244,6 +311,149 @@ router.get('/initConversation/:conversationID', jwtverifier, (req, res) => {
             })
         }
     })
+})
+
+//LONG POLLING FOR MESSAGES
+
+router.get('/subscribeMessages', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    responses[id] = res;
+
+    req.on('close', () => {
+        delete responses[id];
+    })
+})
+
+function respondToAllMsgData(sender, receiver, conversationID, type){
+    for(let idd in responses){
+        let otherres =  responses[idd];
+        
+        if(idd == sender){
+            otherres.setHeader('Access-Control-Allow-Origin', '*');
+            otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+            otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+            otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+        else if(idd == receiver){
+            otherres.setHeader('Access-Control-Allow-Origin', '*');
+            otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+            otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+            otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+    }
+}
+
+//END OF LONG POLLING
+
+router.get('/recipientlist/:filterType', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const filterType = req.params.filterType;
+
+    UserProfilesData.find({userType: filterType},(err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Unable find Recipients!" } })
+            console.log(err);
+        }
+        else{
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
+router.post('/newMessage', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const userType = req.params.userType;
+    
+    const contentID = `${makeid(20)}`;
+    const content = req.body.content;
+    const contentType = req.body.contentType;
+    const contentTime = `${timeGetter()}`;
+    const contentDate = `${dateGetter()}`;
+    // const fromID = req.body.fromID;
+    // const fromType = req.body.fromType;
+    const toID = req.body.toID;
+    const toType = req.body.toType;
+    const filterType = req.body.filterType
+
+    ConversationData.find({$or: [
+        {"from.userID": id, "to.userID": toID},
+        {"to.userID": id, "from.userID": toID}
+    ]},(err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Unable to check conversation!" } })
+            console.log(err);
+        }
+        else{
+            // res.send("ok");
+            // console.log(result)
+            if(result.length == 0){
+                //newMessage
+                newMessage(`${makeid(15)}`)
+            }
+            else{
+                //continueConvo
+                checkandmakeContent(result[0].conversationID)
+            }
+        }
+    })
+
+    const newMessage = (convID) => {
+        ConversationData.count({conversationID: convID},(err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error scanning conversation!" } })
+                console.log(err)
+            }
+            else{
+                // res.send("ok")
+                // console.log(result)
+                if(result == 0){
+                    checkandmakeContent(convID)
+                }
+                else{
+                    newMessage(`${makeid(15)}`)
+                }
+            }
+        })
+    }
+
+    const checkandmakeContent = (confconvID) => {
+        ConversationData.count({}, (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error checking messages!" } })
+                console.log(err)
+            }
+            else{
+
+                const newContent = new ConversationData({
+                    conversationID: confconvID,
+                    contentID: result + 1,
+                    content: content,
+                    contentType: contentType,
+                    contentTime: contentTime,
+                    contentDate: contentDate,
+                    from: {
+                        userID: id,
+                        userType: userType
+                    },
+                    to: {
+                        userID: toID,
+                        userType: toType
+                    }
+                })
+
+                newContent.save().then(() => {
+                    res.send({ status: true, result: { message: "Message Sent!", conversationID: confconvID } })
+                    respondToAllMsgData(id, toID, confconvID, filterType)
+                    // console.log("Good")
+                }).catch((err) => {
+                    res.send({ status: false, result: { message: "Unable to send message!" } })
+                    console.log(err)
+                })
+            }
+        })
+    }
+    
 })
 
 module.exports = router;
