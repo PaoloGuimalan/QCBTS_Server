@@ -346,7 +346,7 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
-        else if(idd == receiver){
+        if(idd == receiver){
             otherres.setHeader('Access-Control-Allow-Origin', '*');
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
@@ -363,7 +363,7 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
-        else if(idd == receiver){
+        if(idd == receiver){
             otherres.setHeader('Access-Control-Allow-Origin', '*');
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
