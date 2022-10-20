@@ -9,6 +9,7 @@ const UserProfilesData = require("../../schema/allusers/userprofiles")
 
 let responses = Object.create(null);
 let responsesConvo = Object.create(null);
+let responsesAlert = Object.create(null);
 
 const jwtverifier = (req, res, next) => {
     const token = req.headers["x-access-token"];
@@ -336,6 +337,16 @@ router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/subscribeAlertMessage', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    responsesAlert[id] = res;
+
+    req.on('close', () => {
+        delete responsesAlert[id];
+    })
+})
+
 function respondToAllMsgData(sender, receiver, conversationID, type){
     for(let idd in responses){
         let otherres =  responses[idd];
@@ -363,6 +374,23 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
+        if(idd == receiver){
+            otherres.setHeader('Access-Control-Allow-Origin', '*');
+            otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+            otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+            otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+    }
+
+    for(let idd in responsesAlert){
+        let otherres =  responsesAlert[idd];
+        
+        // if(idd == sender){
+        //     otherres.setHeader('Access-Control-Allow-Origin', '*');
+        //     otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+        //     otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+        //     otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        // }
         if(idd == receiver){
             otherres.setHeader('Access-Control-Allow-Origin', '*');
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
