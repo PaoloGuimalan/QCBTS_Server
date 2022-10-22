@@ -187,10 +187,10 @@ router.get('/admin/jwtchecker', jwtverifier, (req, res) => {
 })
 
 router.post('/logincompany', (req, res) => {
-    const companyID = req.body.companyID;
+    const companyAdminID = req.body.companyAdminID;
     const password = req.body.password;
 
-    CompanyData.findOne({companyID: companyID, password: password}, (err, result) => {
+    CompanyData.findOne({companyAdminID: companyAdminID, password: password}, (err, result) => {
         if(err){
             res.send({status: false, result: {
                 message: "Unable to Login!"
@@ -198,14 +198,24 @@ router.post('/logincompany', (req, res) => {
         }
         else{
             if(result != null){
-                const token = jwt.sign({id: result.companyID}, "qcbtsserver", {
-                    expiresIn: 10000
-                })
-
-                res.send({status: true, result: {
-                    companyID: result.companyID,
-                    token: token
-                }})
+                if(result.status){
+                    const token = jwt.sign({id: result.companyAdminID}, "qcbtsserver", {
+                        expiresIn: 60 * 60 * 24 * 7
+                    })
+    
+                    res.send({status: true, result: {
+                        companyID: result.companyID,
+                        companyAdminID: result.companyAdminID,
+                        companyAdminName: `${result.companyAdmin.firstname} ${result.companyAdmin.lastname}`,
+                        companyAdminEmail: result.email,
+                        token: token
+                    }})
+                }
+                else{
+                    res.send({ status: false, result: {
+                        message: "Account is Not Activated!"
+                    } })
+                }
             }
             else{
                 res.send({status: false, result: {
@@ -229,18 +239,26 @@ const jwtverifiercmpad = (req, res, next) => {
             }
             else{
                 const id = decode.id;
+                // console.log(id)
 
-                CompanyData.findOne({companyID: id}, (err, result) => {
+                CompanyData.findOne({companyAdminID: id, status: true}, (err, result) => {
                     if(err){
                         res.send({status: false, result:{
                             message: "Error checking account!"
                         }})
                     }
                     else{
-                        if(id.includes("company")){
-                            if(result.companyID == id){
-                                req.params.decodedID = decode.id
-                                next();
+                        if(result != null){
+                            if(id.includes("companyadmin")){
+                                if(result.companyAdminID == id){
+                                    req.params.decodedID = decode.id
+                                    next();
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
                             }
                             else{
                                 res.send({status: false, result:{
@@ -250,7 +268,7 @@ const jwtverifiercmpad = (req, res, next) => {
                         }
                         else{
                             res.send({status: false, result:{
-                                message: "No Existing Account!"
+                                message: "Account has been Deactivated"
                             }})
                         }
                     }
@@ -267,10 +285,42 @@ const jwtverifiercmpad = (req, res, next) => {
 }
 
 router.get('/companyadmin/jwtchecker', jwtverifiercmpad, (req, res) => {
-    res.send({status: true, result: {
-        message: "jwt proceeds",
-        id: req.params.decodedID
-    }})
+    const id = req.params.decodedID;
+
+    CompanyData.findOne({companyAdminID: id}, (err, result) => {
+        if(err){
+            res.send({status: false, result: {
+                message: "Unable to Login!"
+            }})
+        }
+        else{
+            if(result != null){
+                if(result.status){
+                    res.send({status: true, result: {
+                        companyID: result.companyID,
+                        companyAdminID: result.companyAdminID,
+                        companyAdminName: `${result.companyAdmin.firstname} ${result.companyAdmin.lastname}`,
+                        companyAdminEmail: result.email
+                    }})
+                }
+                else{
+                    res.send({ status: false, result: {
+                        message: "Account is Not Activated!"
+                    } })
+                }
+            }
+            else{
+                res.send({status: false, result: {
+                    message: "No Account Matched!"
+                }})
+            }
+        }
+    })
+
+    // res.send({status: true, result: {
+    //     message: "jwt proceeds",
+    //     id: req.params.decodedID
+    // }})
 })
 
 module.exports = router;
