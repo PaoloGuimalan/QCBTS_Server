@@ -621,4 +621,18 @@ router.get('/getSpecificBusStopData/:busStopID', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/getCompanyListDA', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    CompanyRegdata.find({}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot establish Company Data List" } })
+            console.log(err);
+        }
+        else{
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
 module.exports = router;
