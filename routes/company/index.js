@@ -4,6 +4,7 @@ const mongoose = require("mongoose")
 const jwt = require("jsonwebtoken")
 
 const CompanyData = require("../../schema/company/companydata");
+const CompanyRegdata = require("../../schema/company/companyRegdata")
 
 router.use((req, res, next) => {
     next();
@@ -22,18 +23,26 @@ const jwtverifier = (req, res, next) => {
             }
             else{
                 const id = decode.id;
+                // console.log(id)
 
-                CompanyData.findOne({companyID: id}, (err, result) => {
+                CompanyData.findOne({companyAdminID: id, status: true}, (err, result) => {
                     if(err){
                         res.send({status: false, result:{
                             message: "Error checking account!"
                         }})
                     }
                     else{
-                        if(id.includes("company")){
-                            if(result.companyID == id){
-                                req.params.decodedID = decode.id
-                                next();
+                        if(result != null){
+                            if(id.includes("companyadmin")){
+                                if(result.companyAdminID == id){
+                                    req.params.decodedID = decode.id
+                                    next();
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
                             }
                             else{
                                 res.send({status: false, result:{
@@ -43,7 +52,7 @@ const jwtverifier = (req, res, next) => {
                         }
                         else{
                             res.send({status: false, result:{
-                                message: "No Existing Account!"
+                                message: "Account has been Deactivated"
                             }})
                         }
                     }
@@ -63,8 +72,11 @@ router.get('/', (req, res) => {
     res.send("Company API");
 })
 
-router.get('/data', jwtverifier, (req, res) => {
-    CompanyData.findOne({companyID: req.params.decodedID}, (err, result) => {
+router.get('/data/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID =  req.params.companyID;
+
+    CompanyRegdata.findOne({companyID: companyID}, (err, result) => {
         if(err){
             res.send({status: false, result: {
                 message: "Data fetch error!"
