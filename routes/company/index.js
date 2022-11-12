@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken")
 
 const CompanyData = require("../../schema/company/companydata");
 const CompanyRegdata = require("../../schema/company/companyRegdata")
+const BusStopsData = require("../../schema/configs/busstops")
 
 router.use((req, res, next) => {
     next();
@@ -91,6 +92,18 @@ router.get('/data/:companyID', jwtverifier, (req, res) => {
                     message: "No Existing Data!"
                 }})
             }
+        }
+    })
+})
+
+router.get('/enabledBusStops', (req, res) => {
+    BusStopsData.find({status: true}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot fetch Bus Stops" } })
+            console.log(err)
+        }
+        else{
+            res.send({ status: true, result: result })
         }
     })
 })
