@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken")
 const ConversationData = require("../../schema/messages/conversationdata");
 const AdminData = require("../../schema/admin/admindata")
 const UserProfilesData = require("../../schema/allusers/userprofiles")
+const CompanyData = require("../../schema/company/companydata");
 
 let responses = Object.create(null);
 let responsesConvo = Object.create(null);
@@ -57,6 +58,64 @@ const jwtverifier = (req, res, next) => {
                     //Add else if statements for other accounts such as Company Admin, Driver, Commuter
                     res.send({ status: false, result: { message: "Token not from System Admin" }})
                 }
+            }
+        })
+    }
+    else{
+        res.send({status: false, result:{
+            message: "No Token Received!"
+        }})
+    }
+    // jwt.verify()
+}
+
+const jwtverifiercmpad = (req, res, next) => {
+    const token = req.headers["x-access-token"];
+
+    //JWT must be transfered in headers later
+    if(token != null && token != ""){
+        jwt.verify(token, "qcbtsserver", (err, decode) => {
+            if(err){
+                res.send({status: false, result:{
+                    message: "Token Error!"
+                }})
+            }
+            else{
+                const id = decode.id;
+                // console.log(id)
+
+                CompanyData.findOne({companyAdminID: id, status: true}, (err, result) => {
+                    if(err){
+                        res.send({status: false, result:{
+                            message: "Error checking account!"
+                        }})
+                    }
+                    else{
+                        if(result != null){
+                            if(id.includes("companyadmin")){
+                                if(result.companyAdminID == id){
+                                    req.params.decodedID = decode.id
+                                    next();
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
+                            }
+                            else{
+                                res.send({status: false, result:{
+                                    message: "No Existing Account!"
+                                }})
+                            }
+                        }
+                        else{
+                            res.send({status: false, result:{
+                                message: "Account has been Deactivated"
+                            }})
+                        }
+                    }
+                })
             }
         })
     }
@@ -510,6 +569,104 @@ router.post('/newMessage', jwtverifier, (req, res) => {
         })
     }
     
+})
+
+router.get('/caconversationlist/:filterType', jwtverifiercmpad, (req, res) => {
+    const id = req.params.decodedID;
+    const filterType =  'companyadmins';
+    const filterTypeDynamic = req.params.filterType;
+
+    const generateProfilewithMessage = (arrayData, convResult) => {
+        UserProfilesData.find({ userID: { $in: arrayData } }, (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error generating Messages and Profiles" } })
+                console.log(err)
+            }
+            else{
+                res.send({ status: true, result: {
+                    profiles: result.reverse(),
+                    conversations: convResult
+                } })
+                // console.log({ status: true, result: {
+                //     profiles: result,
+                //     conversations: convResult
+                // } })
+                // console.log(result)
+            }
+        })
+    }
+
+    ConversationData.aggregate([
+        {$match: {$or: [
+            {$and: [
+                {"from.userType": filterType},
+                {"to.userType": filterTypeDynamic},
+                {$or: [
+                    {"from.userID": id},
+                    {"to.userID": id}
+                ]}
+            ]},
+            {$and: [
+                {"to.userType": filterType},
+                {"from.userType": filterTypeDynamic},
+                {$or: [
+                    {"from.userID": id},
+                    {"to.userID": id}
+                ]}
+            ]}
+        ]}},
+        {$group: {
+            _id: "$conversationID",
+            conversationID: { $last: "$conversationID" },
+            contentID: { $last: "$contentID" },
+            content: { $last: "$content" },
+            contentType: { $last: "$contentType" },
+            contentTime: { $last: "$contentTime" },
+            contentDate: { $last: "$contentDate" },
+            from: { $last: "$from" },
+            to: { $last: "$to" }
+        }},
+        // {$match: {$or: [{$or: [{"from.userType": filterType},{"from.userID": id}]},{$or: [{"to.userType": filterType},{"to.userID": id}]}]}},
+        {$sort: {
+            contentID: -1
+        }}
+    ],
+        (err, result) => {
+            if(err){
+                res.send({ status: false, result: { message: "Error generating Messages" } })
+                console.log(err)
+            }
+            else{
+                // res.send({ status: true, result: result })
+                // console.log(filterType)
+                var resArray = [];
+
+                if(result.length != 0){
+                    // console.log(result[0].from)
+                    result.map((data, i) => {
+                        if(data.from.userID == id){
+                            // console.log(data.to.userID);
+                            resArray.push(data.to.userID)
+                        }
+                        else{
+                            // console.log(data.from.userID);
+                            resArray.push(data.from.userID)
+                        }
+                    })
+
+                    setTimeout(() => {
+                        generateProfilewithMessage(resArray, result)
+                        // console.log(resArray)
+                    }, 0)
+                }
+                else{
+                    generateProfilewithMessage(resArray, result)
+                    // console.log(result)
+                }
+            }
+        })
+
+    // res.send({ status: true, result: { message: `Okay: ${companyAdminID}` } })
 })
 
 module.exports = router;
