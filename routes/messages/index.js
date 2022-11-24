@@ -669,5 +669,34 @@ router.get('/caconversationlist/:filterType', jwtverifiercmpad, (req, res) => {
     // res.send({ status: true, result: { message: `Okay: ${companyAdminID}` } })
 })
 
+router.get('/initConversationCompany/:conversationID', jwtverifiercmpad, (req, res) => {
+    const id = req.params.decodedID;
+    const conversationID = req.params.conversationID;
+
+    ConversationData.find({conversationID: conversationID}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot retrieve conversation" } })
+            console.log(err);
+        }
+        else{
+            // res.send("ok")
+            var otherID = result[0].from.userID == id? result[0].to.userID : result[0].from.userID;
+
+            UserProfilesData.findOne({ userID: otherID }, (err2, result2) => {
+                if(err2){
+                    res.send({ status: false, result: { message: "Cannot retrieve user profile" } })
+                    console.log(err2)
+                }
+                else{
+                    res.send({ status: true, result: {
+                        userDetails: result2,
+                        conversation: result
+                    } })
+                }
+            })
+        }
+    })
+})
+
 module.exports = router;
 
