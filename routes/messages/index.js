@@ -386,6 +386,16 @@ router.get('/subscribeMessages', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/subscribeMessagesCompanyAdmin', jwtverifiercmpad, (req, res) => {
+    const id = req.params.decodedID;
+
+    responses[id] = res;
+
+    req.on('close', () => {
+        delete responses[id];
+    })
+})
+
 router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
@@ -396,7 +406,27 @@ router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/subscribeMessagesConvoCompanyAdmin', jwtverifiercmpad, (req, res) => {
+    const id = req.params.decodedID;
+
+    responsesConvo[id] = res;
+
+    req.on('close', () => {
+        delete responsesConvo[id];
+    })
+})
+
 router.get('/subscribeAlertMessage', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    responsesAlert[id] = res;
+
+    req.on('close', () => {
+        delete responsesAlert[id];
+    })
+})
+
+router.get('/subscribeAlertMessageCompanyAdmin', jwtverifiercmpad, (req, res) => {
     const id = req.params.decodedID;
 
     responsesAlert[id] = res;
