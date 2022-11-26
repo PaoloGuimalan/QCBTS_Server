@@ -391,6 +391,8 @@ router.get('/subscribeMessagesCompanyAdmin', jwtverifiercmpad, (req, res) => {
 
     responses[id] = res;
 
+    console.log(id)
+
     req.on('close', () => {
         delete responses[id];
     })
@@ -411,6 +413,8 @@ router.get('/subscribeMessagesConvoCompanyAdmin', jwtverifiercmpad, (req, res) =
 
     responsesConvo[id] = res;
 
+    console.log(id)
+
     req.on('close', () => {
         delete responsesConvo[id];
     })
@@ -430,6 +434,8 @@ router.get('/subscribeAlertMessageCompanyAdmin', jwtverifiercmpad, (req, res) =>
     const id = req.params.decodedID;
 
     responsesAlert[id] = res;
+
+    console.log(id)
 
     req.on('close', () => {
         delete responsesAlert[id];
