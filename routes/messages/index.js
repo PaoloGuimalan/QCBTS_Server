@@ -459,9 +459,7 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
 
-        if(idd.includes("companyadmin")){
-            console.log(`List: ${idd}`)
-        }
+        console.log(`List: ${idd}`)
     }
 
     for(let idd in responsesConvo){
@@ -480,9 +478,7 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
 
-        if(idd.includes("companyadmin")){
-            console.log(`Convo: ${idd}`)
-        }
+        console.log(`Convo: ${idd}`)
     }
 
     for(let idd in responsesAlert){
@@ -501,9 +497,7 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
 
-        if(idd.includes("companyadmin")){
-            console.log(`Alert: ${idd}`)
-        }
+        console.log(`Alert: ${idd}`)
     }
 }
 
