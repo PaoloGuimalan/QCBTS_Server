@@ -181,6 +181,7 @@ router.post('/sendMessage', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
     const userType = req.params.userType;
 
+    // console.log(id)
     
     const conversationID = req.body.conversationID;
     const contentID = `${makeid(20)}`;
@@ -443,9 +444,9 @@ router.get('/subscribeAlertMessageCompanyAdmin', jwtverifiercmpad, (req, res) =>
 })
 
 function respondToAllMsgData(sender, receiver, conversationID, type){
-    console.log(`List: ${responses}`)
-    console.log(`Convo: ${responsesConvo}`)
-    console.log(`Alert: ${responsesAlert}`)
+    // console.log(`List: ${Object.keys(responses)}`)
+    // console.log(`Convo: ${Object.keys(responsesConvo)}`)
+    // console.log(`Alert: ${Object.keys(responsesAlert)}`)
 
     for(let idd in responses){
         let otherres =  responses[idd];
