@@ -391,7 +391,7 @@ router.get('/subscribeMessagesCompanyAdmin', jwtverifiercmpad, (req, res) => {
 
     responses[id] = res;
 
-    console.log(id)
+    // console.log(id)
 
     req.on('close', () => {
         delete responses[id];
@@ -413,7 +413,7 @@ router.get('/subscribeMessagesConvoCompanyAdmin', jwtverifiercmpad, (req, res) =
 
     responsesConvo[id] = res;
 
-    console.log(id)
+    // console.log(id)
 
     req.on('close', () => {
         delete responsesConvo[id];
@@ -435,7 +435,7 @@ router.get('/subscribeAlertMessageCompanyAdmin', jwtverifiercmpad, (req, res) =>
 
     responsesAlert[id] = res;
 
-    console.log(id)
+    // console.log(id)
 
     req.on('close', () => {
         delete responsesAlert[id];
@@ -458,6 +458,10 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
+
+        if(idd.includes("companyadmin")){
+            console.log(`List: ${idd}`)
+        }
     }
 
     for(let idd in responsesConvo){
@@ -475,6 +479,10 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
+
+        if(idd.includes("companyadmin")){
+            console.log(`Convo: ${idd}`)
+        }
     }
 
     for(let idd in responsesAlert){
@@ -491,6 +499,10 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+
+        if(idd.includes("companyadmin")){
+            console.log(`Alert: ${idd}`)
         }
     }
 }
