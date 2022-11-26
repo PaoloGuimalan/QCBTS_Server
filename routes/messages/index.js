@@ -11,6 +11,9 @@ const CompanyData = require("../../schema/company/companydata");
 let responses = Object.create(null);
 let responsesConvo = Object.create(null);
 let responsesAlert = Object.create(null);
+let pendingResponses = [];
+let pendingResponsesConvo = [];
+let pendingResponsesAlert = [];
 
 const jwtverifier = (req, res, next) => {
     const token = req.headers["x-access-token"];
@@ -208,7 +211,10 @@ router.get('/', (req, res) => {
                 time: timeGetter(),
                 data1: Object.keys(responses),
                 data2: Object.keys(responsesAlert),
-                data3: Object.keys(responsesConvo)
+                data3: Object.keys(responsesConvo),
+                pendingresponses: pendingResponses,
+                pendingResponsesConvo: pendingResponsesConvo,
+                pendingResponsesAlert: pendingResponsesAlert
             } })
         }
     })
@@ -419,7 +425,22 @@ router.get('/initConversation/:conversationID', jwtverifier, (req, res) => {
 router.get('/subscribeMessages', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
-    responses[id] = res;
+    // responses[id] = res;
+
+    if(pendingResponses.includes(id)){
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+        res.setHeader("Cache-Control", "no-cache, must-revalidate");
+        res.send({status: true, result: { message: "Ok"}})
+
+        const index = pendingResponses.indexOf(id);
+        if(index > -1){
+            pendingResponses.splice(index, 1)
+        }
+    }
+    else{
+        responses[id] = res;
+    }
 
     // console.log(id)
 
@@ -443,7 +464,22 @@ router.get('/subscribeMessages', jwtverifier, (req, res) => {
 router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
-    responsesConvo[id] = res;
+    // responsesConvo[id] = res;
+
+    if(pendingResponsesConvo.includes(id)){
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+        res.setHeader("Cache-Control", "no-cache, must-revalidate");
+        res.send({status: true, result: { message: "Ok"}})
+
+        const index = pendingResponsesConvo.indexOf(id);
+        if(index > -1){
+            pendingResponsesConvo.splice(index, 1)
+        }
+    }
+    else{
+        responsesConvo[id] = res;
+    }
 
     // console.log(id)
 
@@ -467,7 +503,22 @@ router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
 router.get('/subscribeAlertMessage', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
-    responsesAlert[id] = res;
+    // responsesAlert[id] = res;
+
+    if(pendingResponsesAlert.includes(id)){
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+        res.setHeader("Cache-Control", "no-cache, must-revalidate");
+        res.send({status: true, result: { message: "Ok"}})
+
+        const index = pendingResponsesAlert.indexOf(id);
+        if(index > -1){
+            pendingResponsesAlert.splice(index, 1)
+        }
+    }
+    else{
+        responsesAlert[id] = res;
+    }
 
     // console.log(id)
 
@@ -502,11 +553,22 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
+        else{
+            if(!pendingResponses.includes(sender)){
+                pendingResponses.push(sender)
+            }
+        }
+
         if(idd == receiver){
             otherres.setHeader('Access-Control-Allow-Origin', '*');
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+        else{
+            if(!pendingResponses.includes(receiver)){
+                pendingResponses.push(receiver)
+            }
         }
 
         // console.log(`List: ${idd}`)
@@ -521,11 +583,22 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
         }
+        else{
+            if(!pendingResponsesConvo.includes(sender)){
+                pendingResponsesConvo.push(sender)
+            }
+        }
+
         if(idd == receiver){
             otherres.setHeader('Access-Control-Allow-Origin', '*');
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+        else{
+            if(!pendingResponsesConvo.includes(receiver)){
+                pendingResponsesConvo.push(receiver)
+            }
         }
 
         // console.log(`Convo: ${idd}`)
@@ -545,6 +618,11 @@ function respondToAllMsgData(sender, receiver, conversationID, type){
             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
             otherres.send({status: true, result: { message: "Ok", data: { conversationID: conversationID, listType: type } }})
+        }
+        else{
+            if(!pendingResponsesAlert.includes(receiver)){
+                pendingResponsesAlert.push(receiver)
+            }
         }
 
         // console.log(`Alert: ${idd}`)
