@@ -26,7 +26,7 @@ const jwtverifier = (req, res, next) => {
             else{
                 const id = decode.id;
 
-                if(id.includes("admin")){
+                if(id.split("_")[0] == "admin"){
                     AdminData.findOne({adminID: id}, (err, result) => {
                         if(err){
                             res.send({status: false, result:{
@@ -49,6 +49,40 @@ const jwtverifier = (req, res, next) => {
                             else{
                                 res.send({status: false, result:{
                                     message: "No Existing Account!"
+                                }})
+                            }
+                        }
+                    })
+                }
+                else if(id.split("_")[0] == "companyadmin"){
+                    CompanyData.findOne({companyAdminID: id, status: true}, (err, result) => {
+                        if(err){
+                            res.send({status: false, result:{
+                                message: "Error checking account!"
+                            }})
+                        }
+                        else{
+                            if(result != null){
+                                if(id.includes("companyadmin")){
+                                    if(result.companyAdminID == id){
+                                        req.params.decodedID = decode.id
+                                        next();
+                                    }
+                                    else{
+                                        res.send({status: false, result:{
+                                            message: "No Existing Account!"
+                                        }})
+                                    }
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
+                            }
+                            else{
+                                res.send({status: false, result:{
+                                    message: "Account has been Deactivated"
                                 }})
                             }
                         }
@@ -171,7 +205,10 @@ router.get('/', (req, res) => {
             res.send({ status: true, result: { 
                 messages: "Messages route and database running!" ,
                 date: dateGetter(),
-                time: timeGetter()
+                time: timeGetter(),
+                data1: Object.keys(responses),
+                data2: Object.keys(responsesAlert),
+                data3: Object.keys(responsesConvo)
             } })
         }
     })
@@ -224,8 +261,10 @@ router.post('/sendMessage', jwtverifier, (req, res) => {
 
                 newContent.save().then(() => {
                     res.send({ status: true, result: { message: "Message Sent!" } })
-                    respondToAllMsgData(id, toID, conversationID, filterType)
                     // console.log("Good")
+                }).then(() => {
+                    respondToAllMsgData(id, toID, conversationID, filterType)
+                    // res.send({ status: true, result: { message: "Message Sent!" } })
                 }).catch((err) => {
                     res.send({ status: false, result: { message: "Unable to send message!" } })
                     console.log(err)
@@ -382,66 +421,72 @@ router.get('/subscribeMessages', jwtverifier, (req, res) => {
 
     responses[id] = res;
 
-    req.on('close', () => {
-        delete responses[id];
-    })
-})
-
-router.get('/subscribeMessagesCompanyAdmin', jwtverifiercmpad, (req, res) => {
-    const id = req.params.decodedID;
-
-    responses[id] = res;
-
     // console.log(id)
 
     req.on('close', () => {
         delete responses[id];
     })
 })
+
+// router.get('/subscribeMessagesCompanyAdmin', jwtverifiercmpad, (req, res) => {
+//     const id = req.params.decodedID;
+
+//     responses[id] = res;
+
+//     // console.log(id)
+
+//     req.on('close', () => {
+//         delete responses[id];
+//     })
+// })
 
 router.get('/subscribeMessagesConvo', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
     responsesConvo[id] = res;
 
-    req.on('close', () => {
-        delete responsesConvo[id];
-    })
-})
-
-router.get('/subscribeMessagesConvoCompanyAdmin', jwtverifiercmpad, (req, res) => {
-    const id = req.params.decodedID;
-
-    responsesConvo[id] = res;
-
     // console.log(id)
 
     req.on('close', () => {
         delete responsesConvo[id];
     })
 })
+
+// router.get('/subscribeMessagesConvoCompanyAdmin', jwtverifiercmpad, (req, res) => {
+//     const id = req.params.decodedID;
+
+//     responsesConvo[id] = res;
+
+//     // console.log(id)
+
+//     req.on('close', () => {
+//         delete responsesConvo[id];
+//     })
+// })
 
 router.get('/subscribeAlertMessage', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
     responsesAlert[id] = res;
 
-    req.on('close', () => {
-        delete responsesAlert[id];
-    })
-})
-
-router.get('/subscribeAlertMessageCompanyAdmin', jwtverifiercmpad, (req, res) => {
-    const id = req.params.decodedID;
-
-    responsesAlert[id] = res;
-
     // console.log(id)
 
     req.on('close', () => {
         delete responsesAlert[id];
     })
 })
+
+// router.get('/subscribeAlertMessageCompanyAdmin', jwtverifiercmpad, (req, res) => {
+//     const id = req.params.decodedID;
+
+//     responsesAlert[id] = res;
+
+//     // console.log(id)
+
+//     req.on('close', () => {
+//         delete responsesAlert[id];
+//     })
+// })
 
 function respondToAllMsgData(sender, receiver, conversationID, type){
     // console.log(`List: ${Object.keys(responses)}`)
