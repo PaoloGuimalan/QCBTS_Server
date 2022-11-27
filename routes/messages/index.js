@@ -69,6 +69,7 @@ const jwtverifier = (req, res, next) => {
                                 if(id.includes("companyadmin")){
                                     if(result.companyAdminID == id){
                                         req.params.decodedID = decode.id
+                                        req.params.userType = "companyadmins"
                                         next();
                                     }
                                     else{
