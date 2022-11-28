@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken")
 //Route for this is /admin
 
 let responses = Object.create(null);
+let pendingResponses = [];
 
 const AdminData = require("../../schema/admin/admindata")
 const CompanyData = require("../../schema/company/companydata")
@@ -51,17 +52,25 @@ const jwtverifier = (req, res, next) => {
             else{
                 const id = decode.id;
 
-                AdminData.findOne({adminID: id}, (err, result) => {
-                    if(err){
-                        res.send({status: false, result:{
-                            message: "Error checking account!"
-                        }})
-                    }
-                    else{
-                        if(id.includes("admin")){
-                            if(result.adminID == id){
-                                req.params.decodedID = decode.id
-                                next();
+                if(id.split("_")[0] == "admin"){
+                    AdminData.findOne({adminID: id}, (err, result) => {
+                        if(err){
+                            res.send({status: false, result:{
+                                message: "Error checking account!"
+                            }})
+                        }
+                        else{
+                            if(id.includes("admin")){
+                                if(result.adminID == id){
+                                    req.params.decodedID = decode.id
+                                    req.params.userType = "systemadmins"
+                                    next();
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
                             }
                             else{
                                 res.send({status: false, result:{
@@ -69,13 +78,47 @@ const jwtverifier = (req, res, next) => {
                                 }})
                             }
                         }
-                        else{
+                    })
+                }
+                else if(id.split("_")[0] == "companyadmin"){
+                    CompanyData.findOne({companyAdminID: id, status: true}, (err, result) => {
+                        if(err){
                             res.send({status: false, result:{
-                                message: "No Existing Account!"
+                                message: "Error checking account!"
                             }})
                         }
-                    }
-                })
+                        else{
+                            if(result != null){
+                                if(id.includes("companyadmin")){
+                                    if(result.companyAdminID == id){
+                                        req.params.decodedID = decode.id
+                                        req.params.userType = "companyadmins"
+                                        next();
+                                    }
+                                    else{
+                                        res.send({status: false, result:{
+                                            message: "No Existing Account!"
+                                        }})
+                                    }
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
+                            }
+                            else{
+                                res.send({status: false, result:{
+                                    message: "Account has been Deactivated"
+                                }})
+                            }
+                        }
+                    })
+                }
+                else{
+                    //Add else if statements for other accounts such as Company Admin, Driver, Commuter
+                    res.send({ status: false, result: { message: "Token not from System Admin" }})
+                }
             }
         })
     }
@@ -103,7 +146,8 @@ const jwtverifier = (req, res, next) => {
 
 router.get('/testadmin', (req, res) => {
     res.send({status: true, result:{
-        message:"Testing Admin Processes!"
+        message:"Testing Admin Processes!",
+        subscribers: Object.keys(responses)
     }})
 })
 
@@ -519,26 +563,34 @@ router.post('/addBusStop', jwtverifier, (req, res) => {
 })
 
 function respondToAllBSData(){
-    BusStopsData.find({}, (err, result) => {
-        if(err){
-            for(let id in responses){
-                let otherres =  responses[id];
-                otherres.setHeader('Access-Control-Allow-Origin', '*');
-                otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
-                otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
-                otherres.send({status: false, result: { message: "Cannot establish data!" }})
-            }
-        }
-        else{
-            for(let id in responses){
-                let otherres =  responses[id];
-                otherres.setHeader('Access-Control-Allow-Origin', '*');
-                otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
-                otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
-                otherres.send({status: true, result: result})
-            }
-        }
-    })
+    // BusStopsData.find({}, (err, result) => {
+    //     if(err){
+    //         for(let id in responses){
+    //             let otherres =  responses[id];
+    //             otherres.setHeader('Access-Control-Allow-Origin', '*');
+    //             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+    //             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+    //             otherres.send({status: false, result: { message: "Cannot establish data!" }})
+    //         }
+    //     }
+    //     else{
+    //         for(let id in responses){
+    //             let otherres =  responses[id];
+    //             otherres.setHeader('Access-Control-Allow-Origin', '*');
+    //             otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+    //             otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+    //             otherres.send({status: true, result: result})
+    //         }
+    //     }
+    // })
+
+    for(let id in responses){
+        let otherres =  responses[id];
+        otherres.setHeader('Access-Control-Allow-Origin', '*');
+        otherres.setHeader('Content-Type', 'text/plain;charset=utf-8');
+        otherres.setHeader("Cache-Control", "no-cache, must-revalidate");
+        otherres.send({status: true, result: { message: "Ok" }})
+    }
 }
 
 /**
@@ -562,6 +614,8 @@ router.get('/busStopsDataSubscribe', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
     responses[id] =  res;
+
+    // console.log(id);
 
     req.on('close', () => {
         delete responses[id];

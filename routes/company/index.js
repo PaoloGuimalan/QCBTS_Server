@@ -96,7 +96,7 @@ router.get('/data/:companyID', jwtverifier, (req, res) => {
     })
 })
 
-router.get('/enabledBusStops', (req, res) => {
+router.get('/enabledBusStops', jwtverifier, (req, res) => {
     BusStopsData.find({status: true}, (err, result) => {
         if(err){
             res.send({ status: false, result: { message: "Cannot fetch Bus Stops" } })
