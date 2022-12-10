@@ -134,6 +134,8 @@ router.post('/createRoute', jwtverifier, (req, res) => {
     const routeName = req.body.routeName;
     const stationList = req.body.stationList;
     const routePath = req.body.routePath;
+    const companyID = req.body.companyID;
+    const privacy = req.body.privacy;
 
     const newRoute = new RoutesData({
         routeID: `RT_${makeid(8)}`,
@@ -142,6 +144,8 @@ router.post('/createRoute', jwtverifier, (req, res) => {
         routePath: routePath,
         dateAdded: dateGetter(),
         addedBy: id,
+        companyID: companyID,
+        privacy: privacy,
         status: false
     })
 
@@ -155,13 +159,28 @@ router.post('/createRoute', jwtverifier, (req, res) => {
     // console.log(req.body);
 })
 
-router.get('/routesList', jwtverifier, (req, res) => {
+router.get('/routesList/:companyID', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
+    const companyID = req.params.companyID;
 
-    RoutesData.find({ addedBy: id }, (err, result) => {
+    RoutesData.find({ companyID: companyID }, (err, result) => {
         if(err){
             console.log(err);
             res.send({ status: false, result: { message: "Error generating route list" } })
+        }
+        else{
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
+router.get('/publicRouteList', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    RoutesData.find({ privacy: true }, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({ status: false, result: { message: "Error generating public route list" } })
         }
         else{
             res.send({ status: true, result: result })

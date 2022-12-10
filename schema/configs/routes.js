@@ -7,6 +7,8 @@ const routesdata = mongoose.Schema({
     routePath: {type: Array, required: true},
     dateAdded: {type: mongoose.Schema.Types.Mixed, required: true},
     addedBy: {type: mongoose.Schema.Types.Mixed, required: true},
+    companyID: {type: mongoose.Schema.Types.Mixed, required: true},
+    privacy: {type: Boolean, required: true},
     status: {type: Boolean, required: true}
 })
 
