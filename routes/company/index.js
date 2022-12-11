@@ -188,4 +188,19 @@ router.get('/publicRouteList', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/busStopDetails/:busStopID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const busStopID = req.params.busStopID;
+
+    BusStopsData.findOne({busStopID: busStopID, status: true}, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({ status: true, result: { message: "Cannot find bus stop data" } })
+        }
+        else{
+            res.send({ status: true, result: result })
+        }
+    })
+})
+
 module.exports = router;
