@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const AdminData = require("../../schema/admin/admindata");
 const CompanyData = require("../../schema/company/companydata");
 const UserProfilesData = require("../../schema/allusers/userprofiles")
+const CommuterData = require("../../schema/commuters/commuterdata")
 
 router.use((req, res, next) => {
     next();
@@ -17,6 +18,17 @@ router.use((req, res, next) => {
 router.get('/', (req, res) => {
     res.send("API Null!");
 })
+
+function makeid(length) {
+    var result           = '';
+    var characters       = '0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * 
+ charactersLength));
+   }
+   return result;
+}
 
 router.post('/loginadmin', (req, res) => {
     const adminID = req.body.adminID;
@@ -321,6 +333,157 @@ router.get('/companyadmin/jwtchecker', jwtverifiercmpad, (req, res) => {
     //     message: "jwt proceeds",
     //     id: req.params.decodedID
     // }})
+})
+
+
+
+//COMMUTER AUTH SECTION
+
+
+const jwtverifiercommuter = (req, res, next) => {
+    const token = req.headers["x-access-token"];
+
+    //JWT must be transfered in headers later
+    if(token != null && token != ""){
+        jwt.verify(token, "qcbtsserver", (err, decode) => {
+            if(err){
+                res.send({status: false, result:{
+                    message: "Token Error!"
+                }})
+            }
+            else{
+                const id = decode.userID;
+                // console.log(id)
+
+                CommuterData.findOne({userID: id}, (err, result) => {
+                    if(err){
+                        res.send({status: false, result:{
+                            message: "Error checking account!"
+                        }})
+                    }
+                    else{
+                        if(result != null){
+                            req.params.userID = result.userID,
+                            req.params.username = result.username
+                            next()
+                            // console.log(result)
+                        }
+                        else{
+                            res.send({status: false, result:{
+                                message: "Error checking token"
+                            }})
+                        }
+                    }
+                })
+            }
+        })
+    }
+    else{
+        res.send({status: false, result:{
+            message: "No Token Received!"
+        }})
+    }
+    // jwt.verify()
+}
+
+router.post('/logincommuter', (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    CommuterData.findOne({ email: email, password: password }, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({ status: false, message: "Error checking account" })
+        }
+        else{
+            if(result == null){
+                res.send({ status: false, message: "No Existing Account" })
+            }
+            else{
+                const token = jwt.sign({userID: result.userID}, "qcbtsserver", {
+                    expiresIn: 60 * 60 * 24 * 7
+                })
+
+                res.send({ status: true, result: {
+                    userID: result.userID,
+                    username: result.username,
+                    token: token
+                } })
+            }
+        }
+    })
+})
+
+router.post('/registercommuter', (req, res) => {
+    const name = req.body.name;
+    const email = req.body.email;
+    const contactnumber = req.body.contactnumber;
+    const password = req.body.password;
+    const userIDpending = `commuter_${makeid(10)}`
+
+    const makeUserProfile = (userID) => {
+        const newuserProfile = new UserProfilesData({
+            userID: userID,
+            userDisplayName: name,
+            preview: "none",
+            userType: "commuter"
+        })
+
+        newuserProfile.save().then(() => {
+            res.send({ status: true, message: "Account has been Successfully Registered" })
+        }).catch((err) => {
+            console.log(err)
+            res.send({ status: false, message: "Unable to Register Account" })
+        })
+    }
+
+    const createCommuterAccount = (verifiedID) => {
+        const newCommuter = new CommuterData({
+            userID: verifiedID,
+            username: `${name.split(" ").join("")}_${makeid(10)}`,
+            name: name,
+            email: email,
+            contactnumber: contactnumber,
+            password: password
+        })
+
+        newCommuter.save().then(() => {
+            // res.send({ status: true, message: "Account has been Successfully Registered" })
+            makeUserProfile(verifiedID)
+        }).catch((err) => {
+            console.log(err)
+            res.send({ status: false, message: "Unable to Register Account" })
+        })
+    }
+
+    const scanExistingID = (pendingID) => {
+        CommuterData.find({ userID: pendingID }, (err, result) => {
+            if(err){
+                console.log(err)
+                res.send({ status: false, message: "Unable to verify account" })
+            }
+            else{
+                if(result.length == 0){
+                    createCommuterAccount(pendingID)
+                }
+                else{
+                    scanExistingID(`commuter_${makeid(10)}`)
+                }
+            }
+        })
+    }
+
+    scanExistingID(userIDpending)
+})
+
+router.get('/commuter/jwtchecker', jwtverifiercommuter, (req, res) => {
+    const userID = req.params.userID;
+    const username = req.params.username;
+
+    res.send({ status: true, result: {
+        userID: userID,
+        username: username
+    } })
 })
 
 module.exports = router;

@@ -40,11 +40,13 @@ const authentication = require("./routes/authentication");
 const admin = require("./routes/admin/index");
 const company = require("./routes/company/index");
 const messages = require("./routes/messages/index")
+const commuters = require("./routes/commuters/index")
 
 app.use("/auth", authentication);
 app.use("/admin", admin);
 app.use("/company", company)
 app.use("/messages", messages)
+app.use("/commuters", commuters)
 
 //LONG POLLING WORKING CONCEPT WITH MESSAGES
 //=================================================================================
