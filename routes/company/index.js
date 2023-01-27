@@ -7,6 +7,7 @@ const CompanyData = require("../../schema/company/companydata");
 const CompanyRegdata = require("../../schema/company/companyRegdata")
 const BusStopsData = require("../../schema/configs/busstops")
 const RoutesData = require("../../schema/configs/routes")
+const AdminData = require("../../schema/admin/admindata")
 
 router.use((req, res, next) => {
     next();
@@ -90,6 +91,98 @@ const jwtverifier = (req, res, next) => {
     // jwt.verify()
 }
 
+const jwtverifierad = (req, res, next) => {
+    const token = req.headers["x-access-token"];
+
+    //JWT must be transfered in headers later
+    if(token != null && token != ""){
+        jwt.verify(token, "qcbtsserver", (err, decode) => {
+            if(err){
+                res.send({status: false, result:{
+                    message: "Token Error!"
+                }})
+            }
+            else{
+                const id = decode.id;
+
+                if(id.split("_")[0] == "admin"){
+                    AdminData.findOne({adminID: id}, (err, result) => {
+                        if(err){
+                            res.send({status: false, result:{
+                                message: "Error checking account!"
+                            }})
+                        }
+                        else{
+                            if(id.includes("admin")){
+                                if(result.adminID == id){
+                                    req.params.decodedID = decode.id
+                                    req.params.userType = "systemadmins"
+                                    next();
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
+                            }
+                            else{
+                                res.send({status: false, result:{
+                                    message: "No Existing Account!"
+                                }})
+                            }
+                        }
+                    })
+                }
+                else if(id.split("_")[0] == "companyadmin"){
+                    CompanyData.findOne({companyAdminID: id, status: true}, (err, result) => {
+                        if(err){
+                            res.send({status: false, result:{
+                                message: "Error checking account!"
+                            }})
+                        }
+                        else{
+                            if(result != null){
+                                if(id.includes("companyadmin")){
+                                    if(result.companyAdminID == id){
+                                        req.params.decodedID = decode.id
+                                        req.params.userType = "companyadmins"
+                                        next();
+                                    }
+                                    else{
+                                        res.send({status: false, result:{
+                                            message: "No Existing Account!"
+                                        }})
+                                    }
+                                }
+                                else{
+                                    res.send({status: false, result:{
+                                        message: "No Existing Account!"
+                                    }})
+                                }
+                            }
+                            else{
+                                res.send({status: false, result:{
+                                    message: "Account has been Deactivated"
+                                }})
+                            }
+                        }
+                    })
+                }
+                else{
+                    //Add else if statements for other accounts such as Company Admin, Driver, Commuter
+                    res.send({ status: false, result: { message: "Token not from System Admin" }})
+                }
+            }
+        })
+    }
+    else{
+        res.send({status: false, result:{
+            message: "No Token Received!"
+        }})
+    }
+    // jwt.verify()
+}
+
 router.get('/', (req, res) => {
     res.send("Company API");
 })
@@ -129,7 +222,7 @@ router.get('/enabledBusStops', jwtverifier, (req, res) => {
     })
 })
 
-router.post('/createRoute', jwtverifier, (req, res) => {
+router.post('/createRoute', jwtverifierad, (req, res) => {
     const id = req.params.decodedID;
     const routeName = req.body.routeName;
     const stationList = req.body.stationList;
@@ -159,7 +252,7 @@ router.post('/createRoute', jwtverifier, (req, res) => {
     // console.log(req.body);
 })
 
-router.get('/routesList/:companyID', jwtverifier, (req, res) => {
+router.get('/routesList/:companyID', jwtverifierad, (req, res) => {
     const id = req.params.decodedID;
     const companyID = req.params.companyID;
 
@@ -174,7 +267,7 @@ router.get('/routesList/:companyID', jwtverifier, (req, res) => {
     })
 })
 
-router.get('/publicRouteList', jwtverifier, (req, res) => {
+router.get('/publicRouteList', jwtverifierad, (req, res) => {
     const id = req.params.decodedID;
 
     RoutesData.find({ privacy: true }, (err, result) => {
