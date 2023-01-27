@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken")
 
 const UserProfilesData = require("../../schema/allusers/userprofiles")
 const CommuterData = require("../../schema/commuters/commuterdata")
+const BusStopsData = require("../../schema/configs/busstops")
 
 router.use((req, res, next) => {
     next();
@@ -164,6 +165,19 @@ router.post('/editcommuterpassword', jwtverifiercommuter, (req, res) => {
             else{
                 res.send({ status: false, message: "Current Password is incorrect" })
             }
+        }
+    })
+})
+
+router.get('/enabledBusStops', jwtverifiercommuter, (req, res) => {
+    BusStopsData.find({status: true}, (err, result) => {
+        if(err){
+            res.send({ status: false, result: { message: "Cannot fetch Bus Stops" } })
+            console.log(err)
+        }
+        else{
+            res.send({ status: true, result: result })
+            // console.log(result)
         }
     })
 })
