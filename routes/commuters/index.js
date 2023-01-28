@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken")
 const UserProfilesData = require("../../schema/allusers/userprofiles")
 const CommuterData = require("../../schema/commuters/commuterdata")
 const BusStopsData = require("../../schema/configs/busstops")
+const RoutesData = require("../../schema/configs/routes")
 
 router.use((req, res, next) => {
     next();
@@ -178,6 +179,18 @@ router.get('/enabledBusStops', jwtverifiercommuter, (req, res) => {
         else{
             res.send({ status: true, result: result })
             // console.log(result)
+        }
+    })
+})
+
+router.get('/publicroutes', jwtverifiercommuter, (req, res) => {
+    RoutesData.find({ privacy: false }, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({ status: false, message: "Unable to retrieve routes" })
+        }
+        else{
+            res.send({ status: true, result: result })
         }
     })
 })
