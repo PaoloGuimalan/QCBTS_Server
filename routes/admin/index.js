@@ -13,6 +13,7 @@ const CompanyData = require("../../schema/company/companydata")
 const CompanyRegdata = require("../../schema/company/companyRegdata")
 const BusStopsData = require("../../schema/configs/busstops")
 const UserProfilesData = require("../../schema/allusers/userprofiles")
+const PostsData = require("../../schema/posts/posts")
 
 router.use((req, res, next) => {
     next();
@@ -36,6 +37,16 @@ function dateGetter(){
     var yyyy = today.getFullYear();
 
     return today = mm + '/' + dd + '/' + yyyy;
+}
+
+function timeGetter(){
+    var today = new Date();
+    var hour = String(today.getHours() % 12 || 12);
+    var minutes = String(today.getMinutes() >= 9? today.getMinutes() : `0${today.getMinutes()}`)
+    var seconds = String(today.getSeconds() >= 9? today.getSeconds() : `0${today.getSeconds()}`)
+    var timeIndicator = hour >= 12? "am" : "pm"
+
+    return today = `${hour}:${minutes}:${seconds} ${timeIndicator}`;
 }
 
 const jwtverifier = (req, res, next) => {
@@ -685,6 +696,66 @@ router.get('/getCompanyListDA', jwtverifier, (req, res) => {
         }
         else{
             res.send({ status: true, result: result })
+        }
+    })
+})
+
+router.post('/postUpdates', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const postID = `PS_${makeid(10)}`;
+    const title = req.body.title;
+    const preview = req.body.preview;
+    const content = req.body.content;
+    const viewers = req.body.viewers;
+    const date = dateGetter();
+    const time = timeGetter()
+
+    const checkPostID = (postIDParam) => {
+        PostsData.find({ postID: postIDParam }, (err, result) => {
+            if(err){
+                console.log(err)
+                res.send({ status: false, message: "Unable to process post" })
+            }
+            else{
+                if(result.length != 0){
+                    checkPostID(`PS_${makeid(10)}`)
+                }
+                else{
+                    const newPost = new PostsData({
+                        postID: postIDParam,
+                        title: title,
+                        preview: preview,
+                        content: content,
+                        viewers: viewers,
+                        date: date,
+                        time: time
+                    })
+
+                    newPost.save().then(() => {
+                        res.send({status: true, message: "Update has been posted"})
+                    }).catch((err) => {
+                        console.log(err)
+                        res.send({status: false, message: "Update cannot be posted"})
+                    })
+                }
+            }
+        })
+    }
+
+    checkPostID(postID)
+})
+
+router.get('/getPosts', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    PostsData.find({$or: [{ viewers: "all" }, { viewers: "systemadmins" }]}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Unable to get posts"})
+        }
+        else{
+            // console.log(result);
+            res.send({status: true, result: result})
         }
     })
 })
