@@ -7,6 +7,7 @@ const UserProfilesData = require("../../schema/allusers/userprofiles")
 const CommuterData = require("../../schema/commuters/commuterdata")
 const BusStopsData = require("../../schema/configs/busstops")
 const RoutesData = require("../../schema/configs/routes")
+const PostsData = require("../../schema/posts/posts")
 
 router.use((req, res, next) => {
     next();
@@ -191,6 +192,21 @@ router.get('/publicroutes', jwtverifiercommuter, (req, res) => {
         }
         else{
             res.send({ status: true, result: result })
+        }
+    })
+})
+
+router.get('/getPosts', jwtverifiercommuter, (req, res) => {
+    const id = req.params.decodedID;
+
+    PostsData.find({$or: [{ viewers: "all" }, { viewers: "commuters" }]}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Unable to get posts"})
+        }
+        else{
+            // console.log(result);
+            res.send({status: true, result: result})
         }
     })
 })
