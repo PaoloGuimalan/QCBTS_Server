@@ -8,6 +8,7 @@ const CommuterData = require("../../schema/commuters/commuterdata")
 const BusStopsData = require("../../schema/configs/busstops")
 const RoutesData = require("../../schema/configs/routes")
 const PostsData = require("../../schema/posts/posts")
+const WaitingData = require("../../schema/commuters/waiting")
 
 router.use((req, res, next) => {
     next();
@@ -26,6 +27,25 @@ function makeid(length) {
  charactersLength));
    }
    return result;
+}
+
+function dateGetter(){
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    return today = mm + '/' + dd + '/' + yyyy;
+}
+
+function timeGetter(){
+    var today = new Date();
+    var hour = String(today.getHours() % 12 || 12);
+    var minutes = String(today.getMinutes() >= 9? today.getMinutes() : `0${today.getMinutes()}`)
+    var seconds = String(today.getSeconds() >= 9? today.getSeconds() : `0${today.getSeconds()}`)
+    var timeIndicator = hour >= 12? "am" : "pm"
+
+    return today = `${hour}:${minutes}:${seconds} ${timeIndicator}`;
 }
 
 const jwtverifiercommuter = (req, res, next) => {
@@ -206,6 +226,113 @@ router.get('/getPosts', jwtverifiercommuter, (req, res) => {
         }
         else{
             // console.log(result);
+            res.send({status: true, result: result})
+        }
+    })
+})
+
+router.post('/postWaitingStatus', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+    const busStopID = req.body.busStopID;
+
+    WaitingData.findOne({userID: id}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error scanning waiting status!"})
+        }
+        else{
+            // console.log(result)
+            // res.send({status: true, message: "Status is on Waiting"})
+            if(result == null){
+                const newWaiting = new WaitingData({
+                    busStopID: busStopID,
+                    userID: id,
+                    date: dateGetter(),
+                    time: timeGetter(),
+                    status: "waiting"
+                })
+
+                newWaiting.save().then(() => {
+                    res.send({status: true, message: "Status is on Waiting"})
+                }).catch((err1) => {
+                    console.log(err1)
+                    res.send({status: false, message: "Unable to set status on Waiting"})
+                })
+            }
+            else{
+                WaitingData.findOneAndUpdate({userID: id}, { busStopID: busStopID, date: dateGetter(), time: timeGetter(), status: "waiting" }, (err2, result2) => {
+                    if(err2){
+                        res.send({status: false, message: "Unable to set status on Waiting"})
+                    }
+                    else{
+                        res.send({status: true, message: "Status updated to Waiting"})
+                    }
+                })
+            }
+        }
+    })
+})
+
+router.post('/postIdleStatus', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+    // const busStopID = req.body.busStopID;
+
+    WaitingData.findOne({userID: id}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error scanning waiting status!"})
+        }
+        else{
+            // console.log(result)
+            // res.send({status: true, message: "Status is on Waiting"})
+            if(result == null){
+                res.send({status: true, message: "Status is on Idle"})
+            }
+            else{
+                WaitingData.findOneAndUpdate({userID: id}, { status: "idle" }, (err2, result2) => {
+                    if(err2){
+                        console.log(err2)
+                        res.send({status: false, message: "Unable to set status on Idle"})
+                    }
+                    else{
+                        res.send({status: true, message: "Status updated to Idle"})
+                    }
+                })
+            }
+        }
+    })
+})
+
+router.get("/initWaitingData", jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+
+    WaitingData.findOne({userID: id, status: "waiting"}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error initial waiting status"})
+        }
+        else{
+            // console.log(result)
+            if(result == null){
+                res.send({status: true, result: "OK"})
+            }
+            else{
+                res.send({status: true, result: result})
+            }
+        }
+    })
+})
+
+router.get('/feedInfo/:postID', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+    const postID = req.params.postID
+
+    PostsData.findOne({postID: postID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error getting Feed Info"})
+        }
+        else{
             res.send({status: true, result: result})
         }
     })
