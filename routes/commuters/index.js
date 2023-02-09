@@ -338,4 +338,43 @@ router.get('/feedInfo/:postID', jwtverifiercommuter, (req, res) => {
     })
 })
 
+//LONG POLLING FOR WAITING STATUS SETTER
+
+router.get('/pollWaitingStatus', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+
+    // console.log(`${id} Connected`)
+
+    req.on('close', () => {
+        // console.log(`${id} Closed`)
+        WaitingData.findOne({userID: id}, (err, result) => {
+            if(err){
+                console.log(err)
+                // res.send({status: false, message: "Error scanning waiting status!"})
+            }
+            else{
+                // console.log(result)
+                // res.send({status: true, message: "Status is on Waiting"})
+                if(result == null){
+                    // res.send({status: true, message: "Status is on Idle"})
+                }
+                else{
+                    WaitingData.findOneAndUpdate({userID: id}, { status: "idle" }, (err2, result2) => {
+                        if(err2){
+                            console.log(err2)
+                            // res.send({status: false, message: "Unable to set status on Idle"})
+                        }
+                        else{
+                            // res.send({status: true, message: "Status updated to Idle"})
+                            // console.log(`${id} Idle`)
+                        }
+                    })
+                }
+            }
+        })
+    })
+})
+
+//LONG POLLING FOR WAITING STATUS SETTER
+
 module.exports = router;
