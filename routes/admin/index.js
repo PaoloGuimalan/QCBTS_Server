@@ -15,6 +15,8 @@ const BusStopsData = require("../../schema/configs/busstops")
 const UserProfilesData = require("../../schema/allusers/userprofiles")
 const PostsData = require("../../schema/posts/posts")
 const Driver = require("../../schema/driver/driverRegister")
+const RoutesData = require("../../schema/configs/routes")
+const AssignedRoutes = require("../../schema/configs/assignedRoute")
 
 router.use((req, res, next) => {
     next();
@@ -789,6 +791,55 @@ router.post('/updateDriverStatus', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, message: "Driver status updated"})
+        }
+    })
+})
+
+router.get('/availableRoutes', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    
+    RoutesData.find({privacy: true}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot generate routes"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
+router.post('/assignRoute', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const routeID = req.body.routeID;
+    const companyID = req.body.companyID;
+    const date = dateGetter();
+
+    const newAssignedRoute = new AssignedRoutes({
+        routeID: routeID,
+        companyID: companyID,
+        dateAssigned: date
+    })
+
+    newAssignedRoute.save().then(() => {
+        res.send({status: true, message: "Route has been Assigned"})
+    }).catch((err) => {
+        console.log(err)
+        res.send({status: false, message: "Cannot assign route"})
+    })
+})
+
+router.get('/assignedRoutes/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID
+
+    AssignedRoutes.find({companyID: companyID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot generate assigned routes"})
+        }
+        else{
+            res.send({status: true, result: result})
         }
     })
 })

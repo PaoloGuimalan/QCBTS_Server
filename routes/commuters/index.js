@@ -205,7 +205,7 @@ router.get('/enabledBusStops', jwtverifiercommuter, (req, res) => {
 })
 
 router.get('/publicroutes', jwtverifiercommuter, (req, res) => {
-    RoutesData.find({ privacy: false }, (err, result) => {
+    RoutesData.find({ privacy: true }, (err, result) => {
         if(err){
             console.log(err)
             res.send({ status: false, message: "Unable to retrieve routes" })
