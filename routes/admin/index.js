@@ -14,6 +14,7 @@ const CompanyRegdata = require("../../schema/company/companyRegdata")
 const BusStopsData = require("../../schema/configs/busstops")
 const UserProfilesData = require("../../schema/allusers/userprofiles")
 const PostsData = require("../../schema/posts/posts")
+const Driver = require("../../schema/driver/driverRegister")
 
 router.use((req, res, next) => {
     next();
@@ -756,6 +757,38 @@ router.get('/getPosts', jwtverifier, (req, res) => {
         else{
             // console.log(result);
             res.send({status: true, result: result})
+        }
+    })
+})
+
+router.get('/driverList/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID
+
+    Driver.find({companyID: companyID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot process Drivers List"})
+        }
+        else{
+            res.send({status: true, result: result})
+            // console.log(companyID)
+        }
+    })
+})
+
+router.post('/updateDriverStatus', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const driverID = req.body.driverID
+    const status = req.body.status
+
+    Driver.findOneAndUpdate({ userID: driverID }, { status: status }, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot update driver status"})
+        }
+        else{
+            res.send({status: true, message: "Driver status updated"})
         }
     })
 })
