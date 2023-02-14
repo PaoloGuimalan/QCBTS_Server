@@ -9,6 +9,7 @@ const BusStopsData = require("../../schema/configs/busstops")
 const RoutesData = require("../../schema/configs/routes")
 const PostsData = require("../../schema/posts/posts")
 const WaitingData = require("../../schema/commuters/waiting")
+const AssignedRoutes = require("../../schema/configs/assignedRoute")
 
 router.use((req, res, next) => {
     next();
@@ -372,6 +373,20 @@ router.get('/pollWaitingStatus', jwtverifiercommuter, (req, res) => {
                 }
             }
         })
+    })
+})
+
+router.get('/allassignedroutes', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+
+    AssignedRoutes.find({}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot generate assigned routes"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
     })
 })
 
