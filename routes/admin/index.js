@@ -17,6 +17,7 @@ const PostsData = require("../../schema/posts/posts")
 const Driver = require("../../schema/driver/driverRegister")
 const RoutesData = require("../../schema/configs/routes")
 const AssignedRoutes = require("../../schema/configs/assignedRoute")
+const BusData = require("../../schema/configs/buses")
 
 router.use((req, res, next) => {
     next();
@@ -837,6 +838,68 @@ router.get('/assignedRoutes/:companyID', jwtverifier, (req, res) => {
         if(err){
             console.log(err)
             res.send({status: false, message: "Cannot generate assigned routes"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
+router.post('/addBus', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const busID = `BUS_${makeid(7)}`;
+    const companyID = req.body.companyID;
+    const driverID = req.body.driverID;
+    const busModel = req.body.busModel;
+    const plateNumber = req.body.plateNumber;
+    const capacity = req.body.capacity
+
+    const processAdd = (busIDPass) => {
+        const newBus = new BusData({
+            busID: busIDPass,
+            companyID: companyID,
+            driverID: driverID,
+            busModel: busModel,
+            plateNumber: plateNumber,
+            capacity: capacity
+        })
+
+        newBus.save().then(() => {
+            res.send({status: true, message: "Bus has been Added"})
+        }).catch((err) => {
+            console.log(err)
+            res.send({status: false, message: "Cannot Add bus"})
+        })
+    }
+
+    const checkBusID = (busIDtoCheck) => {
+        BusData.find({busID: busIDtoCheck}, (err, result) => {
+            if(err){
+                console.log(err)
+                res.send({status: false, message: "Cannot scan buses"})
+            }
+            else{
+                if(result.length > 0){
+                    checkBusID(`BUS_${makeid(7)}`)
+                }
+                else{
+                    processAdd(busIDtoCheck)
+                }
+            }
+        })
+    }
+
+    checkBusID(busID)
+})
+
+router.get('/getBusList/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID;
+
+    BusData.find({companyID: companyID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot scan Bus List"})
         }
         else{
             res.send({status: true, result: result})
