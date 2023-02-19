@@ -18,6 +18,7 @@ const Driver = require("../../schema/driver/driverRegister")
 const RoutesData = require("../../schema/configs/routes")
 const AssignedRoutes = require("../../schema/configs/assignedRoute")
 const BusData = require("../../schema/configs/buses")
+const CommuterData = require("../../schema/commuters/commuterdata")
 
 router.use((req, res, next) => {
     next();
@@ -903,6 +904,20 @@ router.get('/getBusList/:companyID', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, result: result})
+        }
+    })
+})
+
+router.get('/countUsers', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    CommuterData.find({}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot count app users"})
+        }
+        else{
+            res.send({status: true, result: result.length})
         }
     })
 })
