@@ -390,6 +390,37 @@ router.get('/allassignedroutes', jwtverifiercommuter, (req, res) => {
     })
 })
 
+router.get('/commuterSearch/:keyword', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+    const keyword = req.params.keyword
+
+    BusStopsData.find({ $or: [{stationName: { $regex: keyword, $options: "i" }}, {stationAddress: { $regex: keyword, $options: "i" }}, {busStopID: { $regex: keyword, $options: "i" }}] }, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Cannot process search result"})
+        }
+        else{
+            RoutesData.find({ $or: [{routeName: { $regex: keyword, $options: "i" }}, {routeID: { $regex: keyword, $options: "i" }}] }, (err2, result2) => {
+                if(err2){
+                    console.log(err)
+                    res.send({status: false, message: "Cannot process search result"})
+                }
+                else{
+                    res.send({status: true, result: {
+                        BusStops: result,
+                        Routes: result2
+                    }})
+                }
+            })
+        }
+    })
+
+    // res.send({status: true, result: {
+    //     BusStops: [],
+    //     Routes: []
+    // }})
+})
+
 //LONG POLLING FOR WAITING STATUS SETTER
 
 module.exports = router;
