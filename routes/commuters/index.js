@@ -394,13 +394,13 @@ router.get('/commuterSearch/:keyword', jwtverifiercommuter, (req, res) => {
     const id = req.params.userID;
     const keyword = req.params.keyword
 
-    BusStopsData.find({ $or: [{stationName: { $regex: keyword, $options: "i" }}, {stationAddress: { $regex: keyword, $options: "i" }}, {busStopID: { $regex: keyword, $options: "i" }}] }, (err, result) => {
+    BusStopsData.find({ $or: [{stationName: { $regex: keyword, $options: "i" }, status: true}, {stationAddress: { $regex: keyword, $options: "i" }, status: true}, {busStopID: { $regex: keyword, $options: "i" }, status: true}] }, (err, result) => {
         if(err){
             console.log(err);
             res.send({status: false, message: "Cannot process search result"})
         }
         else{
-            RoutesData.find({ $or: [{routeName: { $regex: keyword, $options: "i" }}, {routeID: { $regex: keyword, $options: "i" }}] }, (err2, result2) => {
+            RoutesData.find({ $or: [{routeName: { $regex: keyword, $options: "i" }, privacy: true}, {routeID: { $regex: keyword, $options: "i" }, privacy: true}] }, (err2, result2) => {
                 if(err2){
                     console.log(err)
                     res.send({status: false, message: "Cannot process search result"})
