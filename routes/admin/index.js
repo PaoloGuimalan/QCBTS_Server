@@ -922,4 +922,36 @@ router.get('/countUsers', jwtverifier, (req, res) => {
     })
 })
 
+router.post('/deleteAssignedRoute', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.body.companyID;
+    const routeID = req.body.routeID;
+
+    AssignedRoutes.deleteOne({companyID: companyID, routeID: routeID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error in deleting assigned route"})
+        }
+        else{
+            res.send({status: true, message: "Asssigned Route successfully deleted"})
+            // console.log(companyID, routeID)
+        }
+    })
+})
+
+router.post('/deleteBus', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const busID = req.body.busID;
+
+    BusData.deleteOne({busID: busID}, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Error deleting bus"})
+        }
+        else{
+            res.send({status: true, message: "Bus have been deleted"})
+        }
+    })
+})
+
 module.exports = router;
