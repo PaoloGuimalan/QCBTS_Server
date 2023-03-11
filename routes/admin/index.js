@@ -954,4 +954,19 @@ router.post('/deleteBus', jwtverifier, (req, res) => {
     })
 })
 
+router.post('/deleteRoute', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const routeID = req.body.routeID;
+
+    RoutesData.deleteOne({routeID: routeID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error deleting route"})
+        }
+        else{
+            res.send({status: true, message: "Route have been deleted"})
+        }
+    })
+})
+
 module.exports = router;
