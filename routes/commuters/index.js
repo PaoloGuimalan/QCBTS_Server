@@ -10,6 +10,9 @@ const RoutesData = require("../../schema/configs/routes")
 const PostsData = require("../../schema/posts/posts")
 const WaitingData = require("../../schema/commuters/waiting")
 const AssignedRoutes = require("../../schema/configs/assignedRoute")
+const Driver = require("../../schema/driver/driverRegister")
+const CompanyRegdata = require("../../schema/company/companyRegdata")
+const BusData = require("../../schema/configs/buses")
 
 router.use((req, res, next) => {
     next();
@@ -422,5 +425,62 @@ router.get('/commuterSearch/:keyword', jwtverifiercommuter, (req, res) => {
 })
 
 //LONG POLLING FOR WAITING STATUS SETTER
+
+router.post('/busInfoData', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+    
+    const driverID = req.body.driverID;
+    const companyID = req.body.companyID;
+    const busID = req.body.busID;
+    const routeID = req.body.routeID
+
+    // console.log("OK")
+    // res.send({status: true, result: "OK"})
+
+    Driver.findOne({userID: driverID},{email: 0, pass: 0, mobileNumber: 0, age: 0}, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Cannot Process Bus Profile"})
+        }
+        else{
+            CompanyRegdata.findOne({companyID: companyID}, (err1, result1) => {
+                if(err1){
+                    console.log(err1)
+                    res.send({status: false, message: "Cannot Process Bus Company"})
+                }
+                else{
+                    BusData.findOne({busID: busID}, (err2, result2) => {
+                        if(err2){
+                            console.log(err2)
+                            res.send({status: false, message: "Cannot Process Bus Info"})
+                        }
+                        else{
+                            RoutesData.findOne({routeID: routeID}, (err3, result3) => {
+                                if(err3){
+                                    console.log(err3)
+                                    res.send({status: false, message: "Cannot Process Bus Route"})
+                                }
+                                else{
+                                    // console.log({
+                                    //     driverdata: result,
+                                    //     companydata: result1,
+                                    //     busdata: result2,
+                                    //     routesdata: result3
+                                    // })
+                                    res.send({status: true, result: {
+                                        driverdata: result,
+                                        companydata: result1,
+                                        busdata: result2,
+                                        routesdata: result3
+                                    }})
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+        }
+    })
+})
 
 module.exports = router;
