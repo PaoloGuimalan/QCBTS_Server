@@ -933,7 +933,15 @@ router.post('/deleteAssignedRoute', jwtverifier, (req, res) => {
             res.send({status: false, message: "Error in deleting assigned route"})
         }
         else{
-            res.send({status: true, message: "Asssigned Route successfully deleted"})
+            Driver.updateMany({companyID: companyID}, {status: false}, (err2, result2) => {
+                if(err2){
+                    console.log(err2)
+                    res.send({status: false, message: "Error disabling driver accounts"})
+                }
+                else{
+                    res.send({status: true, message: "Asssigned Route successfully deleted"})
+                }
+            })
             // console.log(companyID, routeID)
         }
     })
@@ -942,6 +950,7 @@ router.post('/deleteAssignedRoute', jwtverifier, (req, res) => {
 router.post('/deleteBus', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
     const busID = req.body.busID;
+    const driverID = req.body.driverID;
 
     BusData.deleteOne({busID: busID}, (err, result) => {
         if(err){
@@ -949,7 +958,15 @@ router.post('/deleteBus', jwtverifier, (req, res) => {
             res.send({status: false, message: "Error deleting bus"})
         }
         else{
-            res.send({status: true, message: "Bus have been deleted"})
+            Driver.updateOne({userID: driverID}, { status: false }, (err2, result2) => {
+                if(err2){
+                    console.log(err2)
+                    res.send({status: false, message: `Error disabling ${driverID}`})
+                }
+                else{
+                    res.send({status: true, message: "Bus have been deleted"})
+                }
+            })
         }
     })
 })
