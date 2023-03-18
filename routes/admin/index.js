@@ -986,4 +986,19 @@ router.post('/deleteRoute', jwtverifier, (req, res) => {
     })
 })
 
+router.post('/deleteDriver', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const driverID = req.body.driverID;
+
+    Driver.deleteOne({userID: driverID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error Deleting Driver"})
+        }
+        else{
+            res.send({status: true, message: "Driver has been deleted"})
+        }
+    })
+})
+
 module.exports = router;
