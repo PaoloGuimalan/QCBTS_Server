@@ -1001,4 +1001,18 @@ router.post('/deleteDriver', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/getAllDrivers', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    Driver.find({}, {email: 0, pass: 0}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating driver's list"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
