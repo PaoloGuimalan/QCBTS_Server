@@ -917,7 +917,27 @@ router.get('/countUsers', jwtverifier, (req, res) => {
             res.send({status: false, message: "Cannot count app users"})
         }
         else{
-            res.send({status: true, result: result.length})
+            CompanyRegdata.find({}, (err2, result2) => {
+                if(err2){
+                    console.log(err2)
+                    res.send({status: false, message: "Cannot count companies"})
+                }
+                else{
+                    BusData.find({}, (err3, result3) => {
+                        if(err3){
+                            console.log(err3)
+                            res.send({status: false, message: "Cannot count registered buses"})
+                        }
+                        else{
+                            res.send({status: true, result: {
+                                commuter: result.length,
+                                company: result2.length,
+                                buses: result3.length
+                            }})
+                        }
+                    })
+                }
+            })
         }
     })
 })
