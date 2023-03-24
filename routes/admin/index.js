@@ -929,11 +929,20 @@ router.get('/countUsers', jwtverifier, (req, res) => {
                             res.send({status: false, message: "Cannot count registered buses"})
                         }
                         else{
-                            res.send({status: true, result: {
-                                commuter: result.length,
-                                company: result2.length,
-                                buses: result3.length
-                            }})
+                            Driver.find({}, {pass: 0}, (err4, result4) => {
+                                if(err4){
+                                    console.log(err4)
+                                    res.send({status: false, message: "Cannot scan recently added accounts"})
+                                }
+                                else{
+                                    res.send({status: true, result: {
+                                        commuter: result.length,
+                                        company: result2.length,
+                                        buses: result3.length,
+                                        recentlyAdded: result4
+                                    }})
+                                }
+                            })
                         }
                     })
                 }
