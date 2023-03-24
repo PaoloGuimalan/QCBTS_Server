@@ -12,6 +12,8 @@ const driverRegister = mongoose.Schema({
     pass: {type: mongoose.Schema.Types.Mixed, required: true},
     dlicense: {type: mongoose.Schema.Types.Mixed, required: true},
     age: {type: Number, required: true},
+    dateRegistered: {type: mongoose.Schema.Types.Mixed, required: true},
+    timeRegistered: {type: mongoose.Schema.Types.Mixed, required: true},
     status: Boolean,
     locationSharing: Boolean
 })
