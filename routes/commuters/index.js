@@ -13,6 +13,7 @@ const AssignedRoutes = require("../../schema/configs/assignedRoute")
 const Driver = require("../../schema/driver/driverRegister")
 const CompanyRegdata = require("../../schema/company/companyRegdata")
 const BusData = require("../../schema/configs/buses")
+const UserActivities = require("../../schema/configs/useractivities")
 
 router.use((req, res, next) => {
     next();
@@ -257,6 +258,7 @@ router.post('/postWaitingStatus', jwtverifiercommuter, (req, res) => {
                 })
 
                 newWaiting.save().then(() => {
+                    postUserActivity(`UA_${makeid(15)}`, "Commuter", id, `Mark as Waiting in ${busStopID}`, "Commuter App")
                     res.send({status: true, message: "Status is on Waiting"})
                 }).catch((err1) => {
                     console.log(err1)
@@ -269,6 +271,7 @@ router.post('/postWaitingStatus', jwtverifiercommuter, (req, res) => {
                         res.send({status: false, message: "Unable to set status on Waiting"})
                     }
                     else{
+                        postUserActivity(`UA_${makeid(15)}`, "Commuter", id, `Mark as Waiting in ${busStopID}`, "Commuter App")
                         res.send({status: true, message: "Status updated to Waiting"})
                     }
                 })
@@ -276,6 +279,45 @@ router.post('/postWaitingStatus', jwtverifiercommuter, (req, res) => {
         }
     })
 })
+
+const postUserActivity = (propID, userType, userID, action, platform) => {
+
+    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+
+    UserActivities.findOne({activityID: propID}, (err, result) => {
+        if(err){
+            console.log(err);
+        }
+        else{
+            if(result == null){
+                var dateSplit = dateGetter().split("/")[0] // ex: "03"
+
+                const newUserActivty = new UserActivities({
+                    activityID: propID,
+                    userType: userType,
+                    userID: userID,
+                    action: action,
+                    dateCommited: {
+                        dateRecorded: dateGetter(),
+                        timeRecorded: timeGetter(),
+                        monthName: labels[dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) - 1 : parseInt(dateSplit) - 1],
+                        monthNumber: dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) - 1 : parseInt(dateSplit) - 1
+                    },
+                    platform: platform
+                })
+
+                newUserActivty.save().then(() => {
+
+                }).catch((err) => {
+                    console.log(err)
+                })
+            }
+            else{
+                postUserActivity(`UA_${makeid(15)}`, userType, userID, action, platform)
+            }
+        }
+    })
+}
 
 router.post('/postIdleStatus', jwtverifiercommuter, (req, res) => {
     const id = req.params.userID;
