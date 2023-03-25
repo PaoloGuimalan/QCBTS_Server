@@ -301,7 +301,7 @@ const postUserActivity = (propID, userType, userID, action, platform) => {
                         dateRecorded: dateGetter(),
                         timeRecorded: timeGetter(),
                         monthName: labels[dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) - 1 : parseInt(dateSplit) - 1],
-                        monthNumber: dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) - 1 : parseInt(dateSplit) - 1
+                        monthNumber: dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) : parseInt(dateSplit)
                     },
                     platform: platform
                 })
