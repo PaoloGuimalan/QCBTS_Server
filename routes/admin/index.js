@@ -19,6 +19,7 @@ const RoutesData = require("../../schema/configs/routes")
 const AssignedRoutes = require("../../schema/configs/assignedRoute")
 const BusData = require("../../schema/configs/buses")
 const CommuterData = require("../../schema/commuters/commuterdata")
+const UserActivities = require("../../schema/configs/useractivities")
 
 router.use((req, res, next) => {
     next();
@@ -1037,6 +1038,30 @@ router.get('/getAllDrivers', jwtverifier, (req, res) => {
         if(err){
             console.log(err)
             res.send({status: false, message: "Error generating driver's list"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
+router.get('/getMonthlyActiveStatistics', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    var dateSplit = dateGetter().split("/")[0]
+
+    UserActivities.aggregate([
+        { $group: {
+            _id: "$dateCommited.monthNumber",
+            label: { $last: "$dateCommited.monthName"},
+            count: { $sum: 1}
+        } },
+        {$sort: {
+            _id: 1
+        }}
+    ], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating monthly active statistics"})
         }
         else{
             res.send({status: true, result: result})
