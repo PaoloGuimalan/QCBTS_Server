@@ -1045,11 +1045,14 @@ router.get('/getAllDrivers', jwtverifier, (req, res) => {
     })
 })
 
-router.get('/getMonthlyActiveStatistics', jwtverifier, (req, res) => {
+router.get('/getMonthlyActiveStatistics', (req, res) => {
     const id = req.params.decodedID;
     var dateSplit = dateGetter().split("/")[0]
 
     UserActivities.aggregate([
+        { $match: {
+            platform: "Commuter App"
+        }},
         { $group: {
             _id: "$dateCommited.monthNumber",
             label: { $last: "$dateCommited.monthName"},
