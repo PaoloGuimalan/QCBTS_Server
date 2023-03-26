@@ -1045,7 +1045,7 @@ router.get('/getAllDrivers', jwtverifier, (req, res) => {
     })
 })
 
-router.get('/getMonthlyActiveStatistics', (req, res) => {
+router.get('/getMonthlyActiveStatistics', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
     var dateSplit = dateGetter().split("/")[0]
 
