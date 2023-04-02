@@ -313,6 +313,7 @@ router.post('/createcompanyreg', jwtverifier, (req, res) => {
     const companyAddress = req.body.companyAddress;
     const companyNumber = req.body.companyNumber;
     const email = req.body.companyEmail;
+    const ltoregno = req.body.ltoregno;
     const dateRegistered = dateGetter();
     const preview = req.body.preview;
 
@@ -323,6 +324,7 @@ router.post('/createcompanyreg', jwtverifier, (req, res) => {
             companyAddress: companyAddress,
             companyNumber: companyNumber,
             email: email,
+            ltoregno: ltoregno,
             dateRegistered: dateRegistered,
             preview: preview
         });

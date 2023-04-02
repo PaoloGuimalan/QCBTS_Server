@@ -6,6 +6,7 @@ const companyRegdata = mongoose.Schema({
     companyAddress: {type: mongoose.Schema.Types.Mixed, required: true},
     companyNumber: {type: mongoose.Schema.Types.Mixed, required: true},
     email: {type: mongoose.Schema.Types.Mixed, required: true},
+    ltoregno: {type: mongoose.Schema.Types.Mixed, required: true},
     dateRegistered: {type: mongoose.Schema.Types.Mixed, required: true},
     preview: {type: mongoose.Schema.Types.Mixed, required: true}
 })
