@@ -224,7 +224,7 @@ router.get('/publicroutes', jwtverifiercommuter, (req, res) => {
 router.get('/getPosts', jwtverifiercommuter, (req, res) => {
     const id = req.params.decodedID;
 
-    PostsData.find({$or: [{ viewers: "all" }, { viewers: "commuters" }]}, (err, result) => {
+    PostsData.find({$or: [{ viewers: "all" }, { viewers: "commuters" }]}, null, {sort: {_id: -1}}, (err, result) => {
         if(err){
             console.log(err)
             res.send({status: false, message: "Unable to get posts"})

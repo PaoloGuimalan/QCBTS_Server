@@ -756,7 +756,7 @@ router.post('/postUpdates', jwtverifier, (req, res) => {
 router.get('/getPosts', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
-    PostsData.find({$or: [{ viewers: "all" }, { viewers: "systemadmins" }]}, (err, result) => {
+    PostsData.find({$or: [{ viewers: "all" }, { viewers: "systemadmins" }]}, null, {sort: {_id: -1}}, (err, result) => {
         if(err){
             console.log(err)
             res.send({status: false, message: "Unable to get posts"})
@@ -1070,6 +1070,21 @@ router.get('/getMonthlyActiveStatistics', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, result: result})
+        }
+    })
+})
+
+router.get('/deletePost/:postID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const postID = req.params.postID
+
+    PostsData.deleteOne({postID: postID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Post deletion error"})
+        }
+        else{
+            res.send({status: true, message: "Post has been deleted"})
         }
     })
 })
