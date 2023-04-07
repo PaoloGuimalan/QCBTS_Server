@@ -1089,4 +1089,74 @@ router.get('/deletePost/:postID', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/deleteCompany/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID
+
+    AssignedRoutes.deleteOne({companyID: companyID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Unable to delete assigned route"})
+        }
+        else{
+            BusData.deleteMany({companyID: companyID}, (err1, result1) => {
+                if(err1){
+                    console.log(err1)
+                    res.send({status: false, message: "Unable to delete buses data"})
+                }
+                else{
+                    Driver.deleteMany({companyID: companyID}, (err2, result2) => {
+                        if(err2){
+                            console.log(err2)
+                            res.send({status: false, message: "Unable to delete driver accounts"})
+                        }
+                        else{
+                            CompanyRegdata.deleteOne({companyID: companyID}, (err3, result3) => {
+                                if(err3){
+                                    console.log(err3)
+                                    res.send({status: false, message: "Cannot delete Company, only its data"})
+                                }
+                                else{
+                                    res.send({status: true, message: "Company has been Deleted!"})
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+        }
+    })
+})
+
+router.get('/deleteCompanyRecords/:companyID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const companyID = req.params.companyID
+
+    AssignedRoutes.deleteOne({companyID: companyID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Unable to delete assigned route"})
+        }
+        else{
+            BusData.deleteMany({companyID: companyID}, (err1, result1) => {
+                if(err1){
+                    console.log(err1)
+                    res.send({status: false, message: "Unable to delete buses data"})
+                }
+                else{
+                    Driver.deleteMany({companyID: companyID}, (err2, result2) => {
+                        if(err2){
+                            console.log(err2)
+                            res.send({status: false, message: "Unable to delete driver accounts"})
+                        }
+                        else{
+                            res.send({status: true, message: "Company Records has been cleared!"})
+                        }
+                    })
+                }
+            })
+        }
+    })
+})
+
 module.exports = router;
