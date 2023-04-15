@@ -1187,4 +1187,31 @@ router.post('/updatePost', jwtverifier, (req, res) => {
     // res.send({status: true})
 })
 
+router.post('/updateBusStopData', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    const busStopID = req.body.busStopID;
+    const stationName = req.body.stationName;
+    const stationAddress = req.body.stationAddress;
+
+    BusStopsData.updateOne({busStopID: busStopID}, {stationName: stationName, stationAddress: stationAddress}, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Bus Stop Data cannot be updated"})
+        }
+        else{
+            res.send({status: true, message: "Bus Stop Data has been updated"})
+            respondToAllBSData()
+        }
+    })
+
+    // console.log({
+    //     busStopID,
+    //     stationName,
+    //     stationAddress
+    // })
+
+    // res.send({status: true})
+})
+
 module.exports = router;
