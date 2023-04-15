@@ -333,6 +333,7 @@ router.post('/createcompanyreg', jwtverifier, (req, res) => {
             res.send({status: true, result: {
                 message: "New Company Added!"
             }})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `New Company ${finalID} were registered`, "Admin Web App")
         })
     }
 
@@ -441,6 +442,7 @@ router.post('/updateCompanyData', jwtverifier, (req, res) => {
                     }
                     else{
                         res.send({ status: true, result: { message: "Company Data have been successfully updated!" } })
+                        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Company Data ${companyID} were updated`, "Admin Web App")
                     }
                 })
             }
@@ -567,6 +569,7 @@ router.post('/addBusStop', jwtverifier, (req, res) => {
                     newBusStop.save().then(() => {
                         res.send({ status: true, result: { message: "New Bus Stop has been Added" } })
                         respondToAllBSData()
+                        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `New Bus Stop ${BSID} has been added`, "Admin Web App")
                     }).catch((errc) => {
                         res.send({ status: false, result: { message: "Error in creating Bus Stop" } })
                         console.log(errc)
@@ -654,6 +657,7 @@ router.post('/updateStopStatus', jwtverifier, (req, res) => {
         else{
             res.send({ status: true, result: { message: `Station ${stopID} status has been updated` } })
             respondToAllBSData()
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Bus Stop ${stopID} status has been updated to ${stopStatus}`, "Admin Web App")
         }
     })
 })
@@ -670,6 +674,7 @@ router.get('/deleteBusStop/:busStopID', jwtverifier, (req, res) => {
         else{
             respondToAllBSData()
             res.send({ status: true, result: { message: "Bus Stop has been deleted" } })
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Bus Stop ${busStopID} were deleted`, "Admin Web App")
         }
     })
 })
@@ -741,6 +746,7 @@ router.post('/postUpdates', jwtverifier, (req, res) => {
 
                     newPost.save().then(() => {
                         res.send({status: true, message: "Update has been posted"})
+                        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `New Feed ${postIDParam} has been posted`, "Admin Web App")
                     }).catch((err) => {
                         console.log(err)
                         res.send({status: false, message: "Update cannot be posted"})
@@ -796,6 +802,7 @@ router.post('/updateDriverStatus', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, message: "Driver status updated"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Driver ${driverID} status updated to ${status}`, "Admin Web App")
         }
     })
 })
@@ -828,6 +835,7 @@ router.post('/assignRoute', jwtverifier, (req, res) => {
 
     newAssignedRoute.save().then(() => {
         res.send({status: true, message: "Route has been Assigned"})
+        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
     }).catch((err) => {
         console.log(err)
         res.send({status: false, message: "Cannot assign route"})
@@ -870,6 +878,7 @@ router.post('/addBus', jwtverifier, (req, res) => {
 
         newBus.save().then(() => {
             res.send({status: true, message: "Bus has been Added"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Add New Bus ${busIDPass} assigned to ${driverID}`, "Admin Web App")
         }).catch((err) => {
             console.log(err)
             res.send({status: false, message: "Cannot Add bus"})
@@ -972,6 +981,7 @@ router.post('/deleteAssignedRoute', jwtverifier, (req, res) => {
                 }
                 else{
                     res.send({status: true, message: "Asssigned Route successfully deleted"})
+                    postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
                 }
             })
             // console.log(companyID, routeID)
@@ -997,6 +1007,7 @@ router.post('/deleteBus', jwtverifier, (req, res) => {
                 }
                 else{
                     res.send({status: true, message: "Bus have been deleted"})
+                    postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Bus ${busID} assigned to ${driverID}`, "Admin Web App")
                 }
             })
         }
@@ -1014,6 +1025,7 @@ router.post('/deleteRoute', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, message: "Route have been deleted"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Route ${routeID}`, "Admin Web App")
         }
     })
 })
@@ -1029,6 +1041,7 @@ router.post('/deleteDriver', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, message: "Driver has been deleted"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Bus Driver ${driverID}`, "Admin Web App")
         }
     })
 })
@@ -1085,6 +1098,7 @@ router.get('/deletePost/:postID', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, message: "Post has been deleted"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete ${postID} Feed Post`, "Admin Web App")
         }
     })
 })
@@ -1118,6 +1132,7 @@ router.get('/deleteCompany/:companyID', jwtverifier, (req, res) => {
                                 }
                                 else{
                                     res.send({status: true, message: "Company has been Deleted!"})
+                                    postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete ${companyID} Company Records`, "Admin Web App")
                                 }
                             })
                         }
@@ -1151,6 +1166,7 @@ router.get('/deleteCompanyRecords/:companyID', jwtverifier, (req, res) => {
                         }
                         else{
                             res.send({status: true, message: "Company Records has been cleared!"})
+                            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Clear ${companyID} Company Data`, "Admin Web App")
                         }
                     })
                 }
@@ -1174,6 +1190,7 @@ router.post('/updatePost', jwtverifier, (req, res) => {
         }
         else{
             res.send({status: true, message: "Post has been updated"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Update ${postID} Feed Post`, "Admin Web App")
         }
     })
 
@@ -1202,6 +1219,7 @@ router.post('/updateBusStopData', jwtverifier, (req, res) => {
         else{
             res.send({status: true, message: "Bus Stop Data has been updated"})
             respondToAllBSData()
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Update ${busStopID} Bus Stop Data`, "Admin Web App")
         }
     })
 
@@ -1213,5 +1231,58 @@ router.post('/updateBusStopData', jwtverifier, (req, res) => {
 
     // res.send({status: true})
 })
+
+router.get('/systemActivities', (req, res) => {
+    const id = req.params.decodedID;
+
+    UserActivities.find({}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot generate System Activities"})
+        }
+        else{
+            res.send({status: true, result: result.reverse()})
+        }
+    })
+})
+
+const postUserActivity = (propID, userType, userID, action, platform) => {
+
+    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+
+    UserActivities.findOne({activityID: propID}, (err, result) => {
+        if(err){
+            console.log(err);
+        }
+        else{
+            if(result == null){
+                var dateSplit = dateGetter().split("/")[0] // ex: "03"
+
+                const newUserActivty = new UserActivities({
+                    activityID: propID,
+                    userType: userType,
+                    userID: userID,
+                    action: action,
+                    dateCommited: {
+                        dateRecorded: dateGetter(),
+                        timeRecorded: timeGetter(),
+                        monthName: labels[dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) - 1 : parseInt(dateSplit) - 1],
+                        monthNumber: dateSplit.split("")[0] == "0"? parseInt(dateSplit.split("")[1]) : parseInt(dateSplit)
+                    },
+                    platform: platform
+                })
+
+                newUserActivty.save().then(() => {
+
+                }).catch((err) => {
+                    console.log(err)
+                })
+            }
+            else{
+                postUserActivity(`UA_${makeid(15)}`, userType, userID, action, platform)
+            }
+        }
+    })
+}
 
 module.exports = router;
