@@ -1232,7 +1232,7 @@ router.post('/updateBusStopData', jwtverifier, (req, res) => {
     // res.send({status: true})
 })
 
-router.get('/systemActivities', (req, res) => {
+router.get('/systemActivities', jwtverifier, (req, res) => {
     const id = req.params.decodedID;
 
     UserActivities.find({}, (err, result) => {
