@@ -1159,4 +1159,32 @@ router.get('/deleteCompanyRecords/:companyID', jwtverifier, (req, res) => {
     })
 })
 
+router.post('/updatePost', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    const postID = req.body.postID;
+    const title = req.body.title;
+    const content = req.body.content;
+    const viewers = req.body.viewers;
+
+    PostsData.updateOne({postID: postID}, {title: title, content: content, viewers: viewers}, (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Cannot update post"})
+        }
+        else{
+            res.send({status: true, message: "Post has been updated"})
+        }
+    })
+
+    // console.log({
+    //     postID,
+    //     title,
+    //     content,
+    //     viewers
+    // })
+
+    // res.send({status: true})
+})
+
 module.exports = router;
