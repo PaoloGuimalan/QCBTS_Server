@@ -525,4 +525,18 @@ router.post('/busInfoData', jwtverifiercommuter, (req, res) => {
     })
 })
 
+router.get('/waitingHistory', jwtverifiercommuter, (req, res) => {
+    const id = req.params.userID;
+
+    UserActivities.find({userID: id}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot load waiting history"})
+        }
+        else{
+            res.send({status: true, result: result.reverse()})
+        }
+    })
+})
+
 module.exports = router;
