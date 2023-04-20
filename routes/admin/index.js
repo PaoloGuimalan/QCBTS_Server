@@ -20,6 +20,7 @@ const AssignedRoutes = require("../../schema/configs/assignedRoute")
 const BusData = require("../../schema/configs/buses")
 const CommuterData = require("../../schema/commuters/commuterdata")
 const UserActivities = require("../../schema/configs/useractivities")
+const TripSchedules = require("../../schema/configs/tripschedules")
 
 router.use((req, res, next) => {
     next();
@@ -1284,5 +1285,96 @@ const postUserActivity = (propID, userType, userID, action, platform) => {
         }
     })
 }
+
+router.get('/getTripSchedules/:companyID/:routeID', jwtverifier, (req, res) => {
+    const companyID = req.params.companyID;
+    const routeID = req.params.routeID;
+
+    TripSchedules.find({routeID: routeID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot generate Trip Schedules List"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
+router.post('/saveTripSchedule', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    const tripID = `TS_${makeid(7)}`;
+    const routeID = req.body.routeID;
+    const companyAssigned = req.body.companyID;
+    const tripDestination = req.body.tripDestination;
+    const tripDay = req.body.tripDay;
+    const tripTime = req.body.tripTime;
+    const tripInterval = req.body.tripInterval;
+
+    const checkTripID = (tripIDprop) => {
+        TripSchedules.findOne({tripID: tripIDprop}, (err, result) => {
+            if(err){
+                console.log(err)
+                res.send({status: false, message: "Error checking Trip ID"})
+            }
+            else{
+                // console.log(result)
+                if(result != null){
+                    checkTripID(`TS_${makeid(7)}`)
+                }
+                else{
+                    const newTripSchedule = new TripSchedules({
+                        tripID: tripIDprop,
+                        routeID: routeID,
+                        companyAssigned: companyAssigned,
+                        tripDestination: tripDestination,
+                        tripDay: tripDay,
+                        tripTime: tripTime,
+                        tripInterval: tripInterval
+                    })
+
+                    newTripSchedule.save().then(() => {
+                        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Trip Schedule ${tripIDprop} for Route ${routeID} has been saved`, "Admin Web App")
+                        res.send({status: true, message: "Trip Schedule has been saved"})
+                    }).catch((err) => {
+                        res.send({status: false, message: "Error saving Trip Schedule"})
+                        console.log(err)
+                    })
+                }
+            }
+        })
+    }
+
+    checkTripID(tripID)
+
+    // console.log({
+    //     tripID,
+    //     routeID,
+    //     companyAssigned,
+    //     tripDestination,
+    //     tripDay,
+    //     tripTime,
+    //     tripInterval
+    // })
+
+    // res.send({status: true})
+})
+
+router.get('/deleteTripSchedule/:tripID', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const tripID = req.params.tripID;
+
+    TripSchedules.deleteOne({tripID: tripID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error Deleting Trip Schedule"})
+        }
+        else{
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Trip Schedule ${tripID} were deleted`, "Admin Web App")
+            res.send({status: true, message: "Trip Schedule has been deleted"})
+        }
+    })
+})
 
 module.exports = router;
