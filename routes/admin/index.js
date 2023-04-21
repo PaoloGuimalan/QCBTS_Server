@@ -874,7 +874,8 @@ router.post('/addBus', jwtverifier, (req, res) => {
             driverID: driverID,
             busModel: busModel,
             plateNumber: plateNumber,
-            capacity: capacity
+            capacity: capacity,
+            busNo: "unassigned"
         })
 
         newBus.save().then(() => {
@@ -1373,6 +1374,67 @@ router.get('/deleteTripSchedule/:tripID', jwtverifier, (req, res) => {
         else{
             postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Trip Schedule ${tripID} were deleted`, "Admin Web App")
             res.send({status: true, message: "Trip Schedule has been deleted"})
+        }
+    })
+})
+
+router.get('/getDriversinRoute', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+
+    Driver.aggregate([{
+        $match: {
+          status: true,
+        },
+      },
+      {
+        $lookup: {
+            from: "buses", // collection name in db
+            localField: "userID",
+            foreignField: "driverID",
+            as: "bus"
+        }
+    },{
+        $unwind: {
+          path: "$bus",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "assignedroutes", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "assignedroute"
+        }
+    },{
+        $unwind: {
+          path: "$assignedroute",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "routes", // collection name in db
+            localField: "assignedroute.routeID",
+            foreignField: "routeID",
+            as: "routeData"
+        }
+    },{
+        $unwind: {
+          path: "$routeData",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $project:{
+            "routeData.stationList": 0,
+            "routeData.routePath": 0,
+            "assignedroute": 0
+        }
+    }], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating Driver and Bus Data"})
+        }
+        else{
+            res.send({status: true, result: result})
         }
     })
 })
