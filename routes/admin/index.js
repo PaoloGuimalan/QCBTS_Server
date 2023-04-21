@@ -835,8 +835,43 @@ router.post('/assignRoute', jwtverifier, (req, res) => {
     })
 
     newAssignedRoute.save().then(() => {
-        res.send({status: true, message: "Route has been Assigned"})
-        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
+        BusData.updateMany({companyID: companyID}, {busNo: 0}, (err, result) => {
+            if(err){
+                console.log(err)
+                res.send({status: false, message: "Error assigning Default Bus Number"})
+            }
+            else{
+                AssignedRoutes.find({routeID: routeID}, {routeID: 0, dateAssigned: 0, _id: 0, __v: 0}, (err2, result2) => {
+                    if(err2){
+                        console.log(err2)
+                        res.send({status: false, message: "Error fetching assigned routes"})
+                    }
+                    else{
+                        if(result2.length > 0){
+                            let result2Final = result2.map(a => a.companyID);
+                            BusData.updateMany({companyID: {$in: result2Final}}, {busNo: 0}, (err3, result3) => {
+                                if(err3){
+                                    console.log(err2)
+                                    res.send({status: false, message: "Error updating buses in similar route"})
+                                }
+                                else{
+                                    res.send({status: true, message: "Route has been Assigned"})
+                                    postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
+                                }
+                            })
+                        }
+                        else{
+                            res.send({status: true, message: "Route has been Assigned"})
+                            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
+                        }
+                        // res.send({status: true, message: "Route has been Assigned"})
+                        // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
+                    }
+                })
+                // res.send({status: true, message: "Route has been Assigned"})
+                // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
+            }
+        })
     }).catch((err) => {
         console.log(err)
         res.send({status: false, message: "Cannot assign route"})
@@ -875,7 +910,7 @@ router.post('/addBus', jwtverifier, (req, res) => {
             busModel: busModel,
             plateNumber: plateNumber,
             capacity: capacity,
-            busNo: "unassigned"
+            busNo: 0
         })
 
         newBus.save().then(() => {
@@ -982,8 +1017,43 @@ router.post('/deleteAssignedRoute', jwtverifier, (req, res) => {
                     res.send({status: false, message: "Error disabling driver accounts"})
                 }
                 else{
-                    res.send({status: true, message: "Asssigned Route successfully deleted"})
-                    postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+                    BusData.updateMany({companyID: companyID}, {busNo: 0}, (err3, result3) => {
+                        if(err3){
+                            console.log(err3)
+                            res.send({status: false, message: "Error setting default Bus Numbers"})
+                        }
+                        else{
+                            AssignedRoutes.find({routeID: routeID}, {routeID: 0, dateAssigned: 0, _id: 0, __v: 0}, (err2, result2) => {
+                                if(err2){
+                                    console.log(err2)
+                                    res.send({status: false, message: "Error fetching assigned routes"})
+                                }
+                                else{
+                                    if(result2.length > 0){
+                                        let result2Final = result2.map(a => a.companyID);
+                                        BusData.updateMany({companyID: {$in: result2Final}}, {busNo: 0}, (err3, result3) => {
+                                            if(err3){
+                                                console.log(err2)
+                                                res.send({status: false, message: "Error updating buses in similar route"})
+                                            }
+                                            else{
+                                                res.send({status: true, message: "Asssigned Route successfully deleted"})
+                                                postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+                                            }
+                                        })
+                                    }
+                                    else{
+                                        res.send({status: true, message: "Asssigned Route successfully deleted"})
+                                        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+                                    }
+                                    // res.send({status: true, message: "Route has been Assigned"})
+                                    // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Route ${routeID} Assigned to Company ${companyID}`, "Admin Web App")
+                                }
+                            })
+                            // res.send({status: true, message: "Asssigned Route successfully deleted"})
+                            // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+                        }
+                    })
                 }
             })
             // console.log(companyID, routeID)
@@ -1498,6 +1568,167 @@ router.get('/getDriversinRouteID/:routeID', jwtverifier, (req, res) => {
         else{
             var resultFilter = result.filter((rtf, i) => rtf.routeData.routeID == routeID)
             res.send({status: true, result: resultFilter})
+        }
+    })
+})
+
+router.post('/autoAssignBusNumbering', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const routeID = req.body.routeID;
+
+    AssignedRoutes.find({routeID: routeID}, {routeID: 0, dateAssigned: 0, _id: 0, __v: 0}, (err2, result2) => {
+        if(err2){
+            console.log(err2)
+            res.send({status: false, message: "Error fetching assigned routes"})
+        }
+        else{
+            if(result2.length > 0){
+                let result2Final = result2.map(a => a.companyID);
+                BusData.updateMany({companyID: {$in: result2Final}}, { $inc: { busNo: 1 } }, (err3, result3) => {
+                    if(err3){
+                        console.log(err3)
+                        res.send({status: false, message: "Error Auto Assigning Bus Number"})
+                    }
+                    else{
+                        res.send({status: true, message: "Bus Numbering successful"})
+                        // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+                    }
+                })
+            }
+            else{
+                res.send({status: true, message: "No Bus to Automate Assign"})
+                // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+            }
+        }
+    })
+
+    // res.send({status: true, message: "OK"})
+})
+
+router.post('/resetBusNumbering', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const routeID = req.body.routeID;
+
+    AssignedRoutes.find({routeID: routeID}, {routeID: 0, dateAssigned: 0, _id: 0, __v: 0}, (err2, result2) => {
+        if(err2){
+            console.log(err2)
+            res.send({status: false, message: "Error fetching assigned routes"})
+        }
+        else{
+            if(result2.length > 0){
+                let result2Final = result2.map(a => a.companyID);
+                BusData.updateMany({companyID: {$in: result2Final}}, { busNo: 0 }, (err3, result3) => {
+                    if(err3){
+                        console.log(err3)
+                        res.send({status: false, message: "Error Resetting Bus Number"})
+                    }
+                    else{
+                        res.send({status: true, message: "Bus Numbering Reset Successful"})
+                        postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Reset All Bus Numbering in Route ${routeID}`, "Admin Web App")
+                    }
+                })
+            }
+            else{
+                res.send({status: true, message: "No Buses to Reset"})
+                // postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Delete Assigned Route ${routeID} from Company ${companyID}`, "Admin Web App")
+            }
+        }
+    })
+})
+
+router.post('/manualAssigningPerDriver', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const routeID = req.body.routeID;
+    const companyID = req.body.companyID;
+    const driverID = req.body.driverID
+
+    Driver.aggregate([{
+        $match: {
+          status: true
+        },
+      },
+      {
+        $lookup: {
+            from: "buses", // collection name in db
+            localField: "userID",
+            foreignField: "driverID",
+            as: "bus"
+        }
+    },{
+        $unwind: {
+          path: "$bus",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "assignedroutes", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "assignedroute"
+        }
+    },{
+        $unwind: {
+          path: "$assignedroute",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "routes", // collection name in db
+            localField: "assignedroute.routeID",
+            foreignField: "routeID",
+            as: "routeData"
+        }
+    },{
+        $unwind: {
+          path: "$routeData",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $project:{
+            "routeData.stationList": 0,
+            "routeData.routePath": 0,
+            "assignedroute": 0
+        }
+    }], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating Driver and Bus Data in specific route"})
+        }
+        else{
+            var resultFilter = result.filter((rtf, i) => rtf.routeData.routeID == routeID && rtf.userID != driverID)
+            var latestBusNovalidate = resultFilter.length > 0? resultFilter[resultFilter.length - 1].bus?.busNo : 0;
+            var latestBusNo = latestBusNovalidate == undefined? 0 : latestBusNovalidate
+            var getMax =  Math.max.apply(Math, resultFilter.map(function(o) { return o.bus.busNo; }))
+
+            // console.log(getMax)
+
+            BusData.updateOne({driverID: driverID}, {busNo: getMax + 1 }, (err3, result3) => {
+                if(err3){
+                    console.log(err3)
+                    res.send({status: false, message: "Error Manually Assigning Bus Number"})
+                }
+                else{
+                    res.send({status: true, message: "Manual Bus Numbering successful"})
+                    postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Manual Bus Numbering for ${driverID}`, "Admin Web App")
+                }
+            })
+            // res.send({status: true, message: "OK"})
+        }
+    })
+})
+
+router.post('/manualResetPerDriver', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    const driverID = req.body.driverID
+
+    BusData.updateOne({driverID: driverID}, {busNo: 0}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error Manually Reset Bus No"})
+        }
+        else{
+            res.send({status: true, message: "Bus Number Reset"})
+            postUserActivity(`UA_${makeid(15)}`, "System Admin", id, `Manual Reset Bus Numbering for ${driverID}`, "Admin Web App")
         }
     })
 })
