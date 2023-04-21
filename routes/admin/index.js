@@ -1698,7 +1698,7 @@ router.post('/manualAssigningPerDriver', jwtverifier, (req, res) => {
             var resultFilter = result.filter((rtf, i) => rtf.routeData.routeID == routeID && rtf.userID != driverID)
             var latestBusNovalidate = resultFilter.length > 0? resultFilter[resultFilter.length - 1].bus?.busNo : 0;
             var latestBusNo = latestBusNovalidate == undefined? 0 : latestBusNovalidate
-            var getMax =  Math.max.apply(Math, resultFilter.map(function(o) { return o.bus.busNo; }))
+            var getMax =  resultFilter.length == 0? 0 : Math.max.apply(Math, resultFilter.map(function(o) { return o.bus.busNo; }))
 
             // console.log(getMax)
 
