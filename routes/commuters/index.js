@@ -583,7 +583,7 @@ router.get('/getRouteData/:routeID', jwtverifiercommuter, (req, res) => {
     })
 })
 
-router.get('/getRoutesWithBusStopID/:stationID', jwtverifiercommuter, (req, res) => {
+router.get('/getRoutesWithBusStopID/:stationID', (req, res) => {
     const stationID = req.params.stationID;
 
     RoutesData.aggregate([{
@@ -619,7 +619,10 @@ router.get('/getRoutesWithBusStopID/:stationID', jwtverifiercommuter, (req, res)
             from: "user_accounts",
             localField: "assignedroutes.companyID",
             foreignField: "companyID",
-            as: "drivers"
+            as: "drivers",
+            pipeline: [
+                {$match: { status: true }}
+            ]
         }
     },{
         $lookup:{
