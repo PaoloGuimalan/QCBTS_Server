@@ -555,4 +555,32 @@ router.get('/getDriverTimeSchedule/:companyID/:routeID', jwtverifiercommuter, (r
     })
 })
 
+router.get('/getBusStopData/:stationID', jwtverifiercommuter, (req, res) => {
+    const busStopID = req.params.stationID;
+
+    BusStopsData.findOne({busStopID: busStopID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot fetch Station Details"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
+router.get('/getRouteData/:routeID', jwtverifiercommuter, (req, res) => {
+    const routeID = req.params.routeID;
+
+    RoutesData.findOne({routeID: routeID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot fetch Route Details"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
