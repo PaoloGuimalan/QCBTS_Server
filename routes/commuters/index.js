@@ -583,7 +583,7 @@ router.get('/getRouteData/:routeID', jwtverifiercommuter, (req, res) => {
     })
 })
 
-router.get('/getRoutesWithBusStopID/:stationID', (req, res) => {
+router.get('/getRoutesWithBusStopID/:stationID', jwtverifiercommuter, (req, res) => {
     const stationID = req.params.stationID;
 
     RoutesData.aggregate([{
