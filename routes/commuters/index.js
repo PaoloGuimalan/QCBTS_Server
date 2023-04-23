@@ -583,4 +583,66 @@ router.get('/getRouteData/:routeID', jwtverifiercommuter, (req, res) => {
     })
 })
 
+router.get('/getRoutesWithBusStopID/:stationID', jwtverifiercommuter, (req, res) => {
+    const stationID = req.params.stationID;
+
+    RoutesData.aggregate([{
+        $match:{
+            "stationList.stationID": stationID
+        }
+    },{
+        $lookup:{
+            from: "assignedroutes",
+            localField: "routeID",
+            foreignField: "routeID",
+            as: "assignedroutes"
+        }
+    },{
+        $unwind: {
+          path: "$assignedroutes",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup:{
+            from: "companylist",
+            localField: "assignedroutes.companyID",
+            foreignField: "companyID",
+            as: "company"
+        }
+    },{
+        $unwind: {
+          path: "$company",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup:{
+            from: "user_accounts",
+            localField: "assignedroutes.companyID",
+            foreignField: "companyID",
+            as: "drivers"
+        }
+    },{
+        $lookup:{
+            from: "buses",
+            localField: "drivers.userID",
+            foreignField: "driverID",
+            as: "drivers.busAssigned"
+        }
+    },{
+        $project:{
+            "stationList": 0,
+            "routePath": 0,
+            "assignedroutes": 0
+        }
+    }], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot scan routes with a specific bus stop"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
