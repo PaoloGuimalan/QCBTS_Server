@@ -14,6 +14,7 @@ const Driver = require("../../schema/driver/driverRegister")
 const CompanyRegdata = require("../../schema/company/companyRegdata")
 const BusData = require("../../schema/configs/buses")
 const UserActivities = require("../../schema/configs/useractivities")
+const TripSchedules = require("../../schema/configs/tripschedules")
 
 router.use((req, res, next) => {
     next();
@@ -535,6 +536,21 @@ router.get('/waitingHistory', jwtverifiercommuter, (req, res) => {
         }
         else{
             res.send({status: true, result: result.reverse()})
+        }
+    })
+})
+
+router.get('/getDriverTimeSchedule/:companyID/:routeID', jwtverifiercommuter, (req, res) => {
+    const companyID = req.params.companyID
+    const routeID = req.params.routeID
+
+    TripSchedules.find({routeID: routeID}, (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Cannot generate Trip Schedules List"})
+        }
+        else{
+            res.send({status: true, result: result})
         }
     })
 })
