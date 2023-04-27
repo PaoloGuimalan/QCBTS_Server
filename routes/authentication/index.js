@@ -390,7 +390,7 @@ router.post('/logincommuter', (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
 
-    CommuterData.findOne({ email: email, password: password }, (err, result) => {
+    CommuterData.findOne({$or: [{ email: email, password: password }, { contactnumber: email, password: password }]}, (err, result) => {
         if(err){
             console.log(err)
             res.send({ status: false, message: "Error checking account" })
