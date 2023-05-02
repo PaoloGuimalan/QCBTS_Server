@@ -1834,6 +1834,18 @@ router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
           preserveNullAndEmptyArrays: true
         }
     },{
+        $lookup: {
+            from: "companylist", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "company"
+        }
+    },{
+        $unwind: {
+          path: "$company",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
         $project:{
             "route.stationList": 0,
             "route.routePath": 0,
