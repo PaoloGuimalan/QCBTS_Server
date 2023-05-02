@@ -1809,6 +1809,36 @@ router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
             foreignField: "userID",
             as: "driveractivities"
         }
+    },{
+        $lookup: {
+            from: "assignedroutes", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "assignedroutes"
+        }
+    },{
+        $unwind: {
+          path: "$assignedroutes",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "routes", // collection name in db
+            localField: "assignedroutes.routeID",
+            foreignField: "routeID",
+            as: "route"
+        }
+    },{
+        $unwind: {
+          path: "$route",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $project:{
+            "route.stationList": 0,
+            "route.routePath": 0,
+            "assignedroutes": 0
+        }
     }], (err, result) => {
         if(err){
             console.log(err);
