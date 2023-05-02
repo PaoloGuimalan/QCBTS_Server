@@ -1794,4 +1794,30 @@ router.get('/getDriverProfile/:driverID', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
+    const driverID = req.params.driverID;
+
+    Driver.aggregate([{
+        $match: {
+          userID: driverID
+        },
+      },
+      {
+        $lookup: {
+            from: "driveractivities", // collection name in db
+            localField: "userID",
+            foreignField: "userID",
+            as: "driveractivities"
+        }
+    }], (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Error generating driver report data"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
