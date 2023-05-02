@@ -1733,4 +1733,66 @@ router.post('/manualResetPerDriver', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/getDriverProfile/:driverID', jwtverifier, (req, res) => {
+    const driverID = req.params.driverID
+
+    Driver.aggregate([{
+        $match: {
+          status: true,
+          userID: driverID
+        },
+      },
+      {
+        $lookup: {
+            from: "buses", // collection name in db
+            localField: "userID",
+            foreignField: "driverID",
+            as: "bus"
+        }
+    },{
+        $unwind: {
+          path: "$bus",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "assignedroutes", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "assignedroute"
+        }
+    },{
+        $unwind: {
+          path: "$assignedroute",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "routes", // collection name in db
+            localField: "assignedroute.routeID",
+            foreignField: "routeID",
+            as: "routeData"
+        }
+    },{
+        $unwind: {
+          path: "$routeData",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $project:{
+            "routeData.stationList": 0,
+            "routeData.routePath": 0,
+            "assignedroute": 0
+        }
+    }], (err, result) => {
+        if(err){
+            console.log(err);
+            res.send({status: false, message: "Error generating driver profile"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
