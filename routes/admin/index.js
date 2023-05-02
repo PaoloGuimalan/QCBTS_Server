@@ -1738,7 +1738,6 @@ router.get('/getDriverProfile/:driverID', jwtverifier, (req, res) => {
 
     Driver.aggregate([{
         $match: {
-          status: true,
           userID: driverID
         },
       },
