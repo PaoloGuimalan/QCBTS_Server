@@ -1929,4 +1929,29 @@ router.get('/getCompanyReport/:companyID', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/getWaitingCommutersPerBusStop', jwtverifier, (req, res) => {
+    UserActivities.aggregate([
+        { $match: {
+            platform: "Commuter App",
+            action: { "$regex": "Mark as Waiting in BS_", "$options": "i" }
+        }},
+        { $group: {
+            _id: "$action",
+            label: { $last: "$activityID"},
+            count: { $sum: 1}
+        } },
+        {$sort: {
+            _id: 1
+        }}
+    ], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating waiting commuters reports"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
