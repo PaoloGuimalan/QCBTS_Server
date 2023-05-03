@@ -1861,7 +1861,7 @@ router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
     })
 })
 
-router.get('/getCompanyReport/:companyID', (req, res) => {
+router.get('/getCompanyReport/:companyID', jwtverifier, (req, res) => {
     const companyID = req.params.companyID;
 
     CompanyRegdata.aggregate([{
