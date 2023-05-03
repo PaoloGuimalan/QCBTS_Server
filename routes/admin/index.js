@@ -1861,4 +1861,51 @@ router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
     })
 })
 
+router.get('/getCompanyReport/:companyID', jwtverifier, (req, res) => {
+    const companyID = req.params.companyID;
+
+    CompanyRegdata.aggregate([{
+        $match:{
+            companyID: companyID
+        }
+    },{
+        $lookup:{
+            from: "assignedroutes", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "assignedroutes"
+        }
+    },{
+        $unwind: {
+          path: "$assignedroutes",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $lookup: {
+            from: "routes", // collection name in db
+            localField: "assignedroutes.routeID",
+            foreignField: "routeID",
+            as: "route"
+        }
+    },{
+        $unwind: {
+          path: "$route",
+          preserveNullAndEmptyArrays: true
+        }
+    },{
+        $project:{
+            "route.routePath": 0,
+            "assignedroutes": 0
+        }
+    }], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating company report"})
+        }
+        else{
+            res.send({status: true, result: result})
+        }
+    })
+})
+
 module.exports = router;
