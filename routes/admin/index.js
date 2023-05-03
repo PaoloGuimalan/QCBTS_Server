@@ -1893,6 +1893,13 @@ router.get('/getCompanyReport/:companyID', jwtverifier, (req, res) => {
           preserveNullAndEmptyArrays: true
         }
     },{
+        $lookup: {
+            from: "tripschedules", // collection name in db
+            localField: "assignedroutes.routeID",
+            foreignField: "routeID",
+            as: "tripschedules"
+        }
+    },{
         $project:{
             "route.routePath": 0,
             "assignedroutes": 0
