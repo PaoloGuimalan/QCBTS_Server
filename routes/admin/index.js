@@ -1847,7 +1847,6 @@ router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
         }
     },{
         $project:{
-            "route.stationList": 0,
             "route.routePath": 0,
             "assignedroutes": 0
         }
