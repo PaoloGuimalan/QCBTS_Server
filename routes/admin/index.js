@@ -1861,7 +1861,7 @@ router.get('/getDriverReportData/:driverID', jwtverifier, (req, res) => {
     })
 })
 
-router.get('/getCompanyReport/:companyID', jwtverifier, (req, res) => {
+router.get('/getCompanyReport/:companyID', (req, res) => {
     const companyID = req.params.companyID;
 
     CompanyRegdata.aggregate([{
@@ -1898,6 +1898,20 @@ router.get('/getCompanyReport/:companyID', jwtverifier, (req, res) => {
             localField: "assignedroutes.routeID",
             foreignField: "routeID",
             as: "tripschedules"
+        }
+    },{
+        $lookup: {
+            from: "user_accounts", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "drivers"
+        }
+    },{
+        $lookup: {
+            from: "buses", // collection name in db
+            localField: "companyID",
+            foreignField: "companyID",
+            as: "buses"
         }
     },{
         $project:{
