@@ -21,6 +21,7 @@ const BusData = require("../../schema/configs/buses")
 const CommuterData = require("../../schema/commuters/commuterdata")
 const UserActivities = require("../../schema/configs/useractivities")
 const TripSchedules = require("../../schema/configs/tripschedules")
+const DriverActivities = require("../../schema/driver/driveractivities")
 
 router.use((req, res, next) => {
     next();
@@ -1940,6 +1941,75 @@ router.get('/getWaitingCommutersPerBusStop', (req, res) => {
         }
         else{
             res.send({status: true, result: result})
+        }
+    })
+})
+
+router.get('/getSystemActivitiesStatistics', jwtverifier, (req, res) => {
+    const id = req.params.decodedID;
+    var dateSplit = dateGetter().split("/")[0]
+
+    UserActivities.aggregate([
+        { $match: {
+            platform: "Commuter App"
+        }},
+        { $group: {
+            _id: "$dateCommited.monthNumber",
+            label: { $last: "$dateCommited.monthName"},
+            count: { $sum: 1}
+        } },
+        {$sort: {
+            _id: 1
+        }}
+    ], (err, result) => {
+        if(err){
+            console.log(err)
+            res.send({status: false, message: "Error generating Commuter Statistics"})
+        }
+        else{
+            // res.send({status: true, result: result})
+            UserActivities.aggregate([
+                { $match: {
+                    platform: "Admin Web App"
+                }},
+                { $group: {
+                    _id: "$dateCommited.monthNumber",
+                    label: { $last: "$dateCommited.monthName"},
+                    count: { $sum: 1}
+                } },
+                {$sort: {
+                    _id: 1
+                }}
+            ], (err2, result2) => {
+                if(err2){
+                    console.log(err2)
+                    res.send({status: false, message: "Error generating System Admin Statistics"})
+                }
+                else{
+                    DriverActivities.aggregate([
+                        { $group: {
+                            _id: "$dateCommited.monthNumber",
+                            label: { $last: "$dateCommited.monthName"},
+                            count: { $sum: 1}
+                        } },
+                        {$sort: {
+                            _id: 1
+                        }}
+                    ], (err3, result3) => {
+                        if(err3){
+                            console.log(err3)
+                            res.send({status: false, message: "Error generating Driver Statistics"})
+                        }
+                        else{
+                            res.send({status: true, result: {
+                                commuters: result,
+                                systemadmin: result2,
+                                drivers: result3
+                            }})
+                        }
+                    })
+                }
+            })
         }
     })
 })
